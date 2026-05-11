@@ -1,0 +1,264 @@
+/* === Card Component === */
+.atr26-card {
+  background: #1a1a2e;
+  border: 2px solid #808080;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.atr26-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.atr26-card-icon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+}
+
+.atr26-card-icon img {
+  max-width: 80px;
+  max-height: 80px;
+}
+
+.atr26-card-name {
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.atr26-card-desc {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-top: 0.5rem;
+}
+
+.atr26-card-damage {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  color: #ff6b6b;
+}
+
+/* === Rarity Colors === */
+.atr26-card-rarity,
+.rarity-common {
+  color: #9e9e9e;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.rarity-rare {
+  color: #42a5f5;
+}
+
+.rarity-epic {
+  color: #ab47bc;
+}
+
+.rarity-legendary {
+  color: #ffa726;
+}
+
+.atr26-card-damage-type {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+}
+
+/* === Card Selection Overlay === */
+.atr26-card-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.atr26-card-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.atr26-card-selection-container {
+  text-align: center;
+  max-width: 700px;
+  width: 100%;
+  padding: 2rem;
+}
+
+.atr26-card-selection-title {
+  color: #fff;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+
+.atr26-card-selection-cards {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.atr26-selectable-card {
+  background: #1a1a2e;
+  border: 3px solid #808080;
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 280px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.3s;
+  animation: cardReveal 0.6s ease-out both;
+  color: #eee;
+}
+
+.atr26-selectable-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+}
+
+.atr26-card-a {
+  animation-delay: 0.2s;
+}
+
+.atr26-card-b {
+  animation-delay: 0.5s;
+}
+
+@keyframes cardReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* === Hint Reveal === */
+.atr26-hint-reveal {
+  color: #fff;
+  animation: cardReveal 0.5s ease-out;
+}
+
+.atr26-hint-content {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 12px;
+  padding: 1.5rem;
+  font-size: 1.1rem;
+  margin-top: 1rem;
+  color: #e0e0e0;
+}
+
+/* === Inventory Grid === */
+.atr26-inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+/* === Loadout === */
+.atr26-loadout-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .atr26-loadout-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.atr26-loadout-slot {
+  background: #1a1a2e;
+  border: 2px dashed #444;
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.atr26-loadout-slot:hover {
+  border-color: #666;
+  background: #1f1f3a;
+}
+
+.atr26-loadout-slot-filled {
+  border-style: solid;
+  border-color: #42a5f5;
+}
+
+.atr26-slot-number {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.atr26-slot-empty-label {
+  font-size: 0.85rem;
+}
+
+/* === Inventory Sidebar === */
+.atr26-inventory-sidebar {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.atr26-sidebar-weapon {
+  background: #1a1a2e;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.atr26-sidebar-weapon:hover {
+  background: #1f1f3a;
+}
+
+/* === Hints === */
+.atr26-hints-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.atr26-hint-card {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.atr26-hint-card p {
+  margin: 0;
+  color: #ccc;
+  font-size: 0.9rem;
+}

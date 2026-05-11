@@ -1,0 +1,87 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>ATR26 Game - Battle</h1>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Navigation -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link" href="/atr26_game/admin/weapons">Weapons</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/atr26_game/admin/teams">Teams</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="/atr26_game/admin/battle">Battle</a>
+    </li>
+  </ul>
+
+  <div class="card mb-4">
+    <div class="card-header">
+      <h4>Auto-Battler</h4>
+    </div>
+    <div class="card-body">
+      <p>Run the auto-battler simulation for all teams that have submitted their loadouts.</p>
+      <button id="run-battle-btn" class="btn btn-danger">Run All Battles</button>
+      <div id="battle-status" class="mt-3"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h4>Battle Results</h4>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Bonus Points</th>
+            <th>Battle Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for result in results %}
+          <tr>
+            <td>{{ result.team.name if result.team else 'Unknown' }}</td>
+            <td>{{ result.bonus_points }}</td>
+            <td>{{ result.battle_date }}</td>
+          </tr>
+          {% endfor %}
+          {% if not results %}
+          <tr>
+            <td colspan="3" class="text-center text-muted">No battle results yet.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('run-battle-btn').addEventListener('click', function() {
+    const statusEl = document.getElementById('battle-status');
+    statusEl.innerHTML = '<div class="alert alert-info">Running battle simulation...</div>';
+
+    fetch('/atr26_game/admin/battle/run', {
+      method: 'POST',
+      headers: { 'CSRF-Token': init.csrfNonce },
+    }).then(r => r.json()).then(data => {
+      if (data.success) {
+        statusEl.innerHTML = '<div class="alert alert-success">Battle complete! Reloading...</div>';
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        statusEl.innerHTML = '<div class="alert alert-danger">Battle failed.</div>';
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

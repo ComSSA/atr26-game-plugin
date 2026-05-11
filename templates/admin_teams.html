@@ -1,0 +1,69 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>ATR26 Game - Teams</h1>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Navigation -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link" href="/atr26_game/admin/weapons">Weapons</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" href="/atr26_game/admin/teams">Teams</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/atr26_game/admin/battle">Battle</a>
+    </li>
+  </ul>
+
+  <div class="card">
+    <div class="card-header">
+      <h4>Team Inventories & Loadouts</h4>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Team</th>
+            <th>Weapons Collected</th>
+            <th>Loadout Submitted</th>
+            <th>Battle Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in team_data %}
+          <tr>
+            <td>{{ entry.team.name }}</td>
+            <td>{{ entry.inventory_count }}</td>
+            <td>
+              {% if entry.loadout_submitted %}
+                <span class="badge bg-success">Submitted</span>
+              {% else %}
+                <span class="badge bg-secondary">Not submitted</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if entry.battle_result %}
+                {{ entry.battle_result.bonus_points }} pts
+              {% else %}
+                <span class="text-muted">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not team_data %}
+          <tr>
+            <td colspan="4" class="text-center text-muted">No teams found.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

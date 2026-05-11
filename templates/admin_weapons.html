@@ -1,0 +1,225 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>ATR26 Game - Weapons</h1>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Navigation -->
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link active" href="/atr26_game/admin/weapons">Weapons</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/atr26_game/admin/teams">Teams</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="/atr26_game/admin/battle">Battle</a>
+    </li>
+  </ul>
+
+  <!-- Add Weapon Form -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h4>Add Weapon</h4>
+    </div>
+    <div class="card-body">
+      <form id="add-weapon-form">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" name="name" required>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Rarity</label>
+            <select class="form-select" name="rarity">
+              <option value="common">Common</option>
+              <option value="rare">Rare</option>
+              <option value="epic">Epic</option>
+              <option value="legendary">Legendary</option>
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Damage Type</label>
+            <input type="text" class="form-control" name="damage_type" value="physical">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="description" rows="2"></textarea>
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Base Damage</label>
+            <input type="number" class="form-control" name="base_damage" value="0">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Border Color</label>
+            <input type="color" class="form-control form-control-color" name="card_border_color" value="#808080">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Icon Path</label>
+            <input type="text" class="form-control" name="icon_path" placeholder="/files/...">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-success">Add Weapon</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Weapons Table -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h4>All Weapons</h4>
+    </div>
+    <div class="card-body">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Rarity</th>
+            <th>Damage Type</th>
+            <th>Base Damage</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for weapon in weapons %}
+          <tr>
+            <td>{{ weapon.id }}</td>
+            <td>{{ weapon.name }}</td>
+            <td>{{ weapon.rarity }}</td>
+            <td>{{ weapon.damage_type }}</td>
+            <td>{{ weapon.base_damage }}</td>
+            <td>
+              <button class="btn btn-sm btn-danger delete-weapon" data-weapon-id="{{ weapon.id }}">Delete</button>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not weapons %}
+          <tr>
+            <td colspan="6" class="text-center text-muted">No weapons created yet.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Loot Table -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h4>Loot Table</h4>
+    </div>
+    <div class="card-body">
+      <form id="add-loot-form" class="row mb-3">
+        <div class="col-md-4">
+          <label class="form-label">Challenge ID</label>
+          <input type="number" class="form-control" name="challenge_id" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Weapon</label>
+          <select class="form-select" name="weapon_id">
+            {% for weapon in weapons %}
+            <option value="{{ weapon.id }}">{{ weapon.name }} ({{ weapon.rarity }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Weight</label>
+          <input type="number" class="form-control" name="weight" value="1" min="1">
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-success">Add Entry</button>
+        </div>
+      </form>
+
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Challenge ID</th>
+            <th>Weapon</th>
+            <th>Weight</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in loot_entries %}
+          <tr>
+            <td>{{ entry.challenge_id }}</td>
+            <td>{{ entry.weapon.name if entry.weapon else 'Unknown' }}</td>
+            <td>{{ entry.weight }}</td>
+            <td>
+              <button class="btn btn-sm btn-danger delete-loot" data-entry-id="{{ entry.id }}">Delete</button>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not loot_entries %}
+          <tr>
+            <td colspan="4" class="text-center text-muted">No loot table entries yet.</td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const csrfNonce = init.csrfNonce;
+
+  document.getElementById('add-weapon-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch('/atr26_game/admin/weapons', {
+      method: 'POST',
+      headers: { 'CSRF-Token': csrfNonce },
+      body: formData,
+    }).then(r => r.json()).then(data => {
+      if (data.success) location.reload();
+    });
+  });
+
+  document.getElementById('add-loot-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch('/atr26_game/admin/loot-table', {
+      method: 'POST',
+      headers: { 'CSRF-Token': csrfNonce },
+      body: formData,
+    }).then(r => r.json()).then(data => {
+      if (data.success) location.reload();
+    });
+  });
+
+  document.querySelectorAll('.delete-weapon').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const id = this.dataset.weaponId;
+      fetch('/atr26_game/admin/weapons/' + id + '/delete', {
+        method: 'POST',
+        headers: { 'CSRF-Token': csrfNonce },
+      }).then(r => r.json()).then(data => {
+        if (data.success) location.reload();
+      });
+    });
+  });
+
+  document.querySelectorAll('.delete-loot').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const id = this.dataset.entryId;
+      fetch('/atr26_game/admin/loot-table/' + id + '/delete', {
+        method: 'POST',
+        headers: { 'CSRF-Token': csrfNonce },
+      }).then(r => r.json()).then(data => {
+        if (data.success) location.reload();
+      });
+    });
+  });
+});
+</script>
+{% endblock %}

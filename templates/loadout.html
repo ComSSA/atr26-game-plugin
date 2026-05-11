@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>Loadout Selector</h1>
+  </div>
+</div>
+
+<div class="container" x-data="LoadoutSelector">
+  <div x-show="loading" class="text-center py-5">
+    <div class="spinner-border text-light" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <div x-show="!loading" class="row">
+    <!-- Loadout Slots -->
+    <div class="col-lg-7 mb-4">
+      <h3>Your Loadout</h3>
+      <p class="text-muted" x-show="submitted">Loadout has been submitted and locked in.</p>
+
+      <div class="atr26-loadout-grid">
+        <template x-for="slot in 5" :key="slot">
+          <div class="atr26-loadout-slot"
+               :class="{'atr26-loadout-slot-filled': slots[slot], 'atr26-loadout-slot-empty': !slots[slot]}"
+               @click="!submitted && openSlotPicker(slot)">
+            <div class="atr26-slot-number" x-text="'Slot ' + slot"></div>
+            <template x-if="slots[slot]">
+              <div class="atr26-slot-weapon">
+                <div class="atr26-card-name" x-text="slots[slot].inventory_item.weapon.name"></div>
+                <span class="atr26-card-rarity"
+                      :class="'rarity-' + slots[slot].inventory_item.weapon.rarity"
+                      x-text="slots[slot].inventory_item.weapon.rarity"></span>
+              </div>
+            </template>
+            <template x-if="!slots[slot]">
+              <div class="atr26-slot-empty-label text-muted">Click to assign</div>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <div class="mt-4" x-show="!submitted">
+        <button class="btn btn-primary" @click="saveLoadout()">Save Draft</button>
+        <button class="btn btn-success ms-2" @click="submitLoadout()">Submit Loadout</button>
+      </div>
+    </div>
+
+    <!-- Inventory Sidebar -->
+    <div class="col-lg-5">
+      <h3>Your Weapons</h3>
+      <div class="atr26-inventory-sidebar">
+        <template x-for="item in inventory" :key="item.id">
+          <div class="atr26-sidebar-weapon"
+               :style="'border-left: 3px solid ' + item.weapon.card_border_color"
+               @click="!submitted && assignSelected(item)">
+            <strong x-text="item.weapon.name"></strong>
+            <span class="atr26-card-rarity" :class="'rarity-' + item.weapon.rarity" x-text="item.weapon.rarity"></span>
+          </div>
+        </template>
+        <p x-show="inventory.length === 0" class="text-muted">No weapons in inventory.</p>
+      </div>
+
+      <!-- Hints -->
+      <h3 class="mt-4">Hints</h3>
+      <div class="atr26-hints-list">
+        <template x-for="hint in hints" :key="hint.id">
+          <div class="atr26-hint-card">
+            <p x-text="hint.hint_content"></p>
+          </div>
+        </template>
+        <p x-show="hints.length === 0" class="text-muted">No hints collected yet.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ Assets.js("assets/js/page.js") }}
+<script src="/plugins/atr26_game/assets/js/loadout.js"></script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>Inventory</h1>
+  </div>
+</div>
+
+<div class="container" x-data="Inventory">
+  <div x-show="loading" class="text-center py-5">
+    <div class="spinner-border text-light" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <div x-show="!loading && items.length === 0" class="text-center py-5">
+    <p class="text-muted fs-5">No weapons collected yet. Solve challenges to earn weapons!</p>
+  </div>
+
+  <div class="row" x-show="!loading && items.length > 0">
+    <template x-for="item in items" :key="item.id">
+      <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+        <div class="atr26-card" :style="'border-color: ' + item.weapon.card_border_color">
+          <div class="atr26-card-icon">
+            <img :src="item.weapon.icon_path" :alt="item.weapon.name" x-show="item.weapon.icon_path">
+            <i class="fas fa-sword" x-show="!item.weapon.icon_path"></i>
+          </div>
+          <div class="atr26-card-body">
+            <h5 class="atr26-card-name" x-text="item.weapon.name"></h5>
+            <span class="atr26-card-rarity" :class="'rarity-' + item.weapon.rarity" x-text="item.weapon.rarity"></span>
+            <span class="atr26-card-damage-type" x-text="item.weapon.damage_type"></span>
+            <p class="atr26-card-desc" x-text="item.weapon.description"></p>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ Assets.js("assets/js/page.js") }}
+<script src="/plugins/atr26_game/assets/js/inventory.js"></script>
+{% endblock %}
