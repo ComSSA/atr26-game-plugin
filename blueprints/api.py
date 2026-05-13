@@ -1,5 +1,9 @@
+import random
+from datetime import datetime
+
 from flask import Blueprint, jsonify, request
 
+from CTFd.models import db
 from CTFd.utils.decorators import authed_only
 from CTFd.utils.user import get_current_user
 
@@ -33,7 +37,7 @@ def card_offer():
     if not challenge_id:
         return jsonify({"success": False, "error": "challenge_id required"}), 400
 
-    from ..models import PendingCardOffer
+    from ..models import LootTable, PendingCardOffer
 
     existing = PendingCardOffer.query.filter_by(
         team_id=team.id, challenge_id=challenge_id
@@ -45,9 +49,31 @@ def card_offer():
     if existing and existing.selected:
         return jsonify({"success": False, "error": "Already selected a card for this challenge"}), 400
 
-    # TODO: Roll two weapons from loot table using weighted random selection
-    # For now, return a placeholder
-    return jsonify({"success": False, "error": "No loot table configured for this challenge"}), 404
+    entries = LootTable.query.filter_by(challenge_id=challenge_id).all()
+    if not entries:
+        return jsonify({"success": False, "error": "No loot configured for this challenge"}), 404
+
+    weights = [e.weight for e in entries]
+
+    if len(entries) == 1:
+        entry_a = entry_b = entries[0]
+    else:
+        idx_a = random.choices(range(len(entries)), weights=weights)[0]
+        remaining = [(e, w) for i, (e, w) in enumerate(zip(entries, weights)) if i != idx_a]
+        rem_weights = [r[1] for r in remaining]
+        idx_b = random.choices(range(len(remaining)), weights=rem_weights)[0]
+        entry_a = entries[idx_a]
+        entry_b = remaining[idx_b][0]
+
+    offer = PendingCardOffer(
+        team_id=team.id,
+        challenge_id=challenge_id,
+        weapon_id_a=entry_a.weapon_id,
+        weapon_id_b=entry_b.weapon_id,
+    )
+    db.session.add(offer)
+    db.session.commit()
+    return jsonify({"success": True, "data": offer.serialize()})
 
 
 @api_bp.route("/card-select", methods=["POST"])
@@ -65,7 +91,7 @@ def card_select():
     if not offer_id or not selected_weapon_id:
         return jsonify({"success": False, "error": "offer_id and selected_weapon_id required"}), 400
 
-    from ..models import PendingCardOffer
+    from ..models import PendingCardOffer, TeamHint, TeamInventory
 
     offer = PendingCardOffer.query.filter_by(id=offer_id, team_id=team.id).first()
     if not offer:
@@ -77,8 +103,35 @@ def card_select():
     if selected_weapon_id not in (offer.weapon_id_a, offer.weapon_id_b):
         return jsonify({"success": False, "error": "Invalid weapon selection"}), 400
 
-    # TODO: Create TeamInventory entry, mark offer as selected, create TeamHint if applicable
-    return jsonify({"success": True, "data": {"message": "Card selected (stub)"}})
+    offer.selected = True
+
+    inv = TeamInventory(
+        team_id=team.id,
+        weapon_id=selected_weapon_id,
+        source_challenge_id=offer.challenge_id,
+    )
+    db.session.add(inv)
+
+    selected_weapon = (
+        offer.weapon_a if selected_weapon_id == offer.weapon_id_a else offer.weapon_b
+    )
+
+    hint = None
+    if selected_weapon.hint_text:
+        hint = TeamHint(
+            team_id=team.id,
+            source_challenge_id=offer.challenge_id,
+            hint_content=selected_weapon.hint_text,
+        )
+        db.session.add(hint)
+
+    db.session.commit()
+
+    response_data = {"weapon": selected_weapon.serialize()}
+    if hint:
+        response_data["hint"] = hint.serialize()
+
+    return jsonify({"success": True, "data": response_data})
 
 
 @api_bp.route("/loadout", methods=["GET"])
@@ -110,8 +163,32 @@ def save_loadout():
     if not team:
         return jsonify({"success": False, "error": "You must be on a team"}), 403
 
-    # TODO: Validate slot assignments, upsert TeamLoadout rows
-    return jsonify({"success": True, "data": {"message": "Loadout saved (stub)"}})
+    from ..models import TeamInventory, TeamLoadout
+
+    existing = TeamLoadout.query.filter_by(team_id=team.id).first()
+    if existing and existing.submitted_at:
+        return jsonify({"success": False, "error": "Loadout already submitted"}), 400
+
+    data = request.get_json()
+    slots = data.get("slots", {})
+
+    TeamLoadout.query.filter_by(team_id=team.id).delete()
+
+    for slot_str, inv_id in slots.items():
+        slot_num = int(slot_str)
+        if slot_num < 1 or slot_num > 5:
+            continue
+        inv = TeamInventory.query.filter_by(id=inv_id, team_id=team.id).first()
+        if not inv:
+            continue
+        db.session.add(TeamLoadout(
+            team_id=team.id,
+            slot_number=slot_num,
+            inventory_id=inv_id,
+        ))
+
+    db.session.commit()
+    return jsonify({"success": True})
 
 
 @api_bp.route("/loadout/submit", methods=["POST"])
@@ -122,8 +199,20 @@ def submit_loadout():
     if not team:
         return jsonify({"success": False, "error": "You must be on a team"}), 403
 
-    # TODO: Lock in loadout by setting submitted_at on all entries
-    return jsonify({"success": True, "data": {"message": "Loadout submitted (stub)"}})
+    from ..models import TeamLoadout
+
+    entries = TeamLoadout.query.filter_by(team_id=team.id).all()
+    if not entries:
+        return jsonify({"success": False, "error": "No loadout to submit"}), 400
+
+    if any(e.submitted_at for e in entries):
+        return jsonify({"success": False, "error": "Loadout already submitted"}), 400
+
+    now = datetime.utcnow()
+    for entry in entries:
+        entry.submitted_at = now
+    db.session.commit()
+    return jsonify({"success": True})
 
 
 @api_bp.route("/hints", methods=["GET"])

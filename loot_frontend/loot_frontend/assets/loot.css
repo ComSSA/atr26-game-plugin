@@ -1,0 +1,157 @@
+/* ── Loot selection modal ── */
+
+#loot-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.loot-modal {
+  background: #1e2130;
+  border: 1px solid #2e3350;
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
+  max-width: 640px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.65);
+  color: #e8eaf6;
+}
+
+.loot-title {
+  font-size: 1.65rem;
+  font-weight: 700;
+  margin: 0 0 0.45rem;
+  color: #c5c8f5;
+}
+
+.loot-subtitle {
+  margin: 0 0 2rem;
+  font-size: 0.9rem;
+  color: #7880a8;
+}
+
+/* ── Cards row ── */
+
+.loot-cards {
+  display: flex;
+  gap: 1.25rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.loot-card {
+  flex: 1 1 200px;
+  max-width: 240px;
+  background: #252b40;
+  border: 2px solid #343b58;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  overflow: hidden;
+  transition: transform 0.14s ease, border-color 0.14s ease,
+    box-shadow 0.14s ease, opacity 0.14s ease;
+}
+
+.loot-card:focus-visible {
+  outline: 2px solid #7c85f0;
+  outline-offset: 2px;
+}
+
+.loot-card:hover:not(.dimmed) {
+  transform: translateY(-4px);
+  border-color: #5c67e0;
+}
+
+.loot-card.selected {
+  border-color: #7c85f0;
+  box-shadow: 0 0 0 3px rgba(124, 133, 240, 0.3);
+  transform: translateY(-4px);
+}
+
+.loot-card.dimmed {
+  opacity: 0.3;
+  transform: none;
+  pointer-events: none;
+}
+
+/* ── Card internals ── */
+
+.loot-card-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #1a1f32;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loot-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.loot-card-placeholder {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #343b58;
+}
+
+.loot-card-body {
+  padding: 0.9rem 1rem 1rem;
+}
+
+.loot-card-name {
+  font-size: 0.98rem;
+  font-weight: 600;
+  margin: 0 0 0.3rem;
+  color: #dde0ff;
+}
+
+.loot-card-desc {
+  font-size: 0.8rem;
+  color: #7880a8;
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* ── Claim button ── */
+
+.loot-claim-btn {
+  background: #5c67e0;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 2.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.14s ease, opacity 0.14s ease;
+}
+
+.loot-claim-btn:hover:not(:disabled) {
+  background: #7c85f0;
+}
+
+.loot-claim-btn:focus-visible {
+  outline: 2px solid #7c85f0;
+  outline-offset: 3px;
+}
+
+.loot-claim-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

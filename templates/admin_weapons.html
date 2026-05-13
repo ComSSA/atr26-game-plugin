@@ -48,21 +48,27 @@
           </div>
         </div>
         <div class="row">
-          <div class="col-md-6 mb-3">
+          <div class="col-md-4 mb-3">
             <label class="form-label">Description</label>
             <textarea class="form-control" name="description" rows="2"></textarea>
           </div>
-          <div class="col-md-2 mb-3">
-            <label class="form-label">Base Damage</label>
-            <input type="number" class="form-control" name="base_damage" value="0">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Hint Text <small class="text-muted">(shown after selecting this weapon)</small></label>
+            <textarea class="form-control" name="hint_text" rows="2" placeholder="Leave blank for no hint"></textarea>
           </div>
-          <div class="col-md-2 mb-3">
-            <label class="form-label">Border Color</label>
-            <input type="color" class="form-control form-control-color" name="card_border_color" value="#808080">
-          </div>
-          <div class="col-md-2 mb-3">
-            <label class="form-label">Icon Path</label>
-            <input type="text" class="form-control" name="icon_path" placeholder="/files/...">
+          <div class="col-md-4 mb-3 d-flex flex-column gap-2">
+            <div>
+              <label class="form-label">Base Damage</label>
+              <input type="number" class="form-control" name="base_damage" value="0">
+            </div>
+            <div>
+              <label class="form-label">Border Color</label>
+              <input type="color" class="form-control form-control-color" name="card_border_color" value="#808080">
+            </div>
+            <div>
+              <label class="form-label">Icon Path</label>
+              <input type="text" class="form-control" name="icon_path" placeholder="/files/...">
+            </div>
           </div>
         </div>
         <button type="submit" class="btn btn-success">Add Weapon</button>

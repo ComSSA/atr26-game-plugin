@@ -1,155 +1,161 @@
 (function () {
-  if (!window.location.pathname.includes("/challenges")) return;
+  "use strict";
 
-  const originalFetch = window.fetch;
-  window.fetch = async function (...args) {
-    const response = await originalFetch.apply(this, args);
-
-    const url = typeof args[0] === "string" ? args[0] : args[0]?.url;
-    if (url && url.includes("/api/v1/challenges/attempt")) {
-      const cloned = response.clone();
-      try {
-        const data = await cloned.json();
-        if (data.success && data.data && data.data.status === "correct") {
-          const body = args[1]?.body;
-          let challengeId = null;
-          if (body) {
-            try {
-              const parsed = JSON.parse(body);
-              challengeId = parsed.challenge_id;
-            } catch (e) {
-              const formData = new URLSearchParams(body);
-              challengeId = formData.get("challenge_id");
-            }
-          }
-          if (challengeId) {
-            setTimeout(function () {
-              showCardSelection(parseInt(challengeId));
-            }, 800);
-          }
-        }
-      } catch (e) {
-        // Not JSON or parse error — ignore
-      }
-    }
-
-    return response;
-  };
+  // Escape user-supplied strings before inserting into innerHTML.
+  function esc(str) {
+    const d = document.createElement("div");
+    d.appendChild(document.createTextNode(str == null ? "" : String(str)));
+    return d.innerHTML;
+  }
 
   async function showCardSelection(challengeId) {
+    let offer;
     try {
-      const csrfToken = window.init?.csrfNonce || "";
-      const resp = await originalFetch("/atr26_game/api/card-offer", {
+      const resp = await window.CTFd.fetch("/atr26_game/api/card-offer", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "CSRF-Token": csrfToken,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ challenge_id: challengeId }),
       });
       const result = await resp.json();
-
       if (!result.success || !result.data) return;
-
-      const offer = result.data;
-      renderCardOverlay(offer);
+      offer = result.data;
     } catch (e) {
       console.error("[atr26_game] Card offer error:", e);
+      return;
     }
+
+    renderModal(offer);
   }
 
-  function renderCardOverlay(offer) {
-    const overlay = document.createElement("div");
-    overlay.className = "atr26-card-overlay";
-    overlay.innerHTML = `
-      <div class="atr26-card-selection-container">
-        <h2 class="atr26-card-selection-title">Choose Your Weapon</h2>
-        <div class="atr26-card-selection-cards">
-          ${renderCard(offer.weapon_a, "a")}
-          ${renderCard(offer.weapon_b, "b")}
+  function buildCardHtml(weapon, side) {
+    const imageHtml = weapon.icon_path
+      ? `<img src="${esc(weapon.icon_path)}" alt="${esc(weapon.name)}">`
+      : `<div class="atr26-card-placeholder"></div>`;
+    return `
+      <button class="atr26-weapon-card atr26-card-${esc(side)}"
+              data-weapon-id="${esc(String(weapon.id))}"
+              style="border-color: ${esc(weapon.card_border_color)}"
+              aria-pressed="false">
+        <div class="atr26-card-image">${imageHtml}</div>
+        <div class="atr26-card-body">
+          <h3 class="atr26-card-name">${esc(weapon.name)}</h3>
+          <span class="atr26-card-rarity rarity-${esc(weapon.rarity)}">${esc(weapon.rarity)}</span>
+          <span class="atr26-card-damage-type">${esc(weapon.damage_type)}</span>
+          <p class="atr26-card-desc">${esc(weapon.description)}</p>
+          <div class="atr26-card-damage">DMG: ${esc(String(weapon.base_damage))}</div>
         </div>
-      </div>
-    `;
+      </button>`;
+  }
+
+  function renderModal(offer) {
+    let selectedWeaponId = null;
+
+    const overlay = document.createElement("div");
+    overlay.id = "atr26-modal-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-labelledby", "atr26-modal-title");
+
+    overlay.innerHTML = `
+      <div class="atr26-modal">
+        <h2 id="atr26-modal-title" class="atr26-modal-title">Choose Your Weapon</h2>
+        <p class="atr26-modal-subtitle">Pick one weapon to claim from this solve</p>
+        <div class="atr26-weapon-cards">
+          ${buildCardHtml(offer.weapon_a, "a")}
+          ${buildCardHtml(offer.weapon_b, "b")}
+        </div>
+        <button id="atr26-claim-btn" class="atr26-claim-btn" disabled>Claim</button>
+      </div>`;
 
     document.body.appendChild(overlay);
-    requestAnimationFrame(function () {
-      overlay.classList.add("active");
-    });
 
-    overlay.querySelectorAll(".atr26-selectable-card").forEach(function (card) {
+    const cards = overlay.querySelectorAll(".atr26-weapon-card");
+    cards.forEach(function (card) {
       card.addEventListener("click", function () {
-        const weaponId = parseInt(this.dataset.weaponId);
-        selectCard(offer.id, weaponId, overlay);
+        cards.forEach(function (c) {
+          c.classList.remove("selected", "dimmed");
+          c.setAttribute("aria-pressed", "false");
+        });
+        card.classList.add("selected");
+        card.setAttribute("aria-pressed", "true");
+        cards.forEach(function (c) {
+          if (c !== card) c.classList.add("dimmed");
+        });
+        selectedWeaponId = parseInt(card.dataset.weaponId, 10);
+        document.getElementById("atr26-claim-btn").disabled = false;
       });
     });
-  }
 
-  function renderCard(weapon, side) {
-    if (!weapon) return "";
-    return `
-      <div class="atr26-selectable-card atr26-card-${side}"
-           data-weapon-id="${weapon.id}"
-           style="border-color: ${weapon.card_border_color}">
-        <div class="atr26-card-icon">
-          ${weapon.icon_path ? `<img src="${weapon.icon_path}" alt="${weapon.name}">` : '<i class="fas fa-sword"></i>'}
-        </div>
-        <div class="atr26-card-body">
-          <h5 class="atr26-card-name">${weapon.name}</h5>
-          <span class="atr26-card-rarity rarity-${weapon.rarity}">${weapon.rarity}</span>
-          <span class="atr26-card-damage-type">${weapon.damage_type}</span>
-          <p class="atr26-card-desc">${weapon.description}</p>
-          <div class="atr26-card-damage">DMG: ${weapon.base_damage}</div>
-        </div>
-      </div>
-    `;
-  }
+    document.getElementById("atr26-claim-btn").addEventListener("click", async function () {
+      if (!selectedWeaponId) return;
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = "Claiming…";
 
-  async function selectCard(offerId, weaponId, overlay) {
-    try {
-      const csrfToken = window.init?.csrfNonce || "";
-      const resp = await originalFetch("/atr26_game/api/card-select", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "CSRF-Token": csrfToken,
-        },
-        body: JSON.stringify({
-          offer_id: offerId,
-          selected_weapon_id: weaponId,
-        }),
-      });
-      const result = await resp.json();
+      let hint = null;
+      try {
+        const resp = await window.CTFd.fetch("/atr26_game/api/card-select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            offer_id: offer.id,
+            selected_weapon_id: selectedWeaponId,
+          }),
+        });
+        const result = await resp.json();
+        if (result.success && result.data && result.data.hint) {
+          hint = result.data.hint;
+        }
+      } catch (e) {
+        console.error("[atr26_game] Card select error:", e);
+      }
 
-      if (result.success && result.data && result.data.hint) {
-        showHintReveal(result.data.hint, overlay);
+      if (hint) {
+        showHintReveal(hint, overlay);
       } else {
         closeOverlay(overlay);
       }
-    } catch (e) {
-      console.error("[atr26_game] Card select error:", e);
-      closeOverlay(overlay);
-    }
+    });
   }
 
   function showHintReveal(hint, overlay) {
-    const container = overlay.querySelector(".atr26-card-selection-container");
-    container.innerHTML = `
+    const modal = overlay.querySelector(".atr26-modal");
+    modal.innerHTML = `
       <div class="atr26-hint-reveal">
-        <h2>Hint Unlocked!</h2>
-        <div class="atr26-hint-content">${hint.hint_content}</div>
-        <p class="text-muted mt-3">This hint is now available in your Loadout page.</p>
-        <button class="btn btn-primary atr26-hint-close">Continue</button>
-      </div>
-    `;
-    container.querySelector(".atr26-hint-close").addEventListener("click", function () {
+        <h2 class="atr26-modal-title">Hint Unlocked!</h2>
+        <div class="atr26-hint-content">${esc(hint.hint_content)}</div>
+        <p class="atr26-modal-subtitle">This hint is now available in your Loadout page.</p>
+        <button class="atr26-claim-btn atr26-hint-close">Continue</button>
+      </div>`;
+    modal.querySelector(".atr26-hint-close").addEventListener("click", function () {
       closeOverlay(overlay);
     });
   }
 
   function closeOverlay(overlay) {
-    overlay.classList.remove("active");
-    setTimeout(function () {
-      overlay.remove();
-    }, 300);
+    overlay.classList.add("closing");
+    setTimeout(function () { overlay.remove(); }, 280);
   }
+
+  // Hook into CTFd's challenge submission so the modal fires on any correct solve.
+  if (
+    window.CTFd &&
+    window.CTFd.pages &&
+    window.CTFd.pages.challenge &&
+    typeof window.CTFd.pages.challenge.submitChallenge === "function"
+  ) {
+    const orig = window.CTFd.pages.challenge.submitChallenge;
+    window.CTFd.pages.challenge.submitChallenge = async function (challengeId, submission) {
+      const response = await orig(challengeId, submission);
+      if (response && response.data && response.data.status === "correct") {
+        setTimeout(function () { showCardSelection(challengeId); }, 600);
+      }
+      return response;
+    };
+  }
+
+  // Dev helper: window.__atr26Test(challengeId?) — trigger the modal directly.
+  window.__atr26Test = function (challengeId) {
+    showCardSelection(challengeId == null ? 0 : challengeId);
+  };
 })();

@@ -16,6 +16,7 @@ class Weapon(db.Model):
     icon_path = db.Column(db.Text, default="")
     card_border_color = db.Column(db.String(7), default="#808080")
     base_damage = db.Column(db.Integer, default=0)
+    hint_text = db.Column(db.Text, default="")
 
     def serialize(self):
         return {
