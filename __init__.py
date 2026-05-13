@@ -1,8 +1,10 @@
+import os
+
+from flask import Blueprint as _BP
 from sqlalchemy import inspect, text
 
 from CTFd.plugins import (
     register_admin_plugin_menu_bar,
-    register_plugin_assets_directory,
     register_plugin_script,
     register_plugin_stylesheet,
     register_user_page_menu_bar,
@@ -26,7 +28,13 @@ def load(app):
     app.db.create_all()
     _migrate_db(app)
 
-    register_plugin_assets_directory(app, base_path="/plugins/atr26_game/assets/")
+    _assets_bp = _BP(
+        "atr26_game_static",
+        __name__,
+        static_folder=os.path.join(os.path.dirname(__file__), "assets"),
+        static_url_path="/plugins/atr26_game/assets",
+    )
+    app.register_blueprint(_assets_bp)
 
     register_plugin_script("/plugins/atr26_game/assets/js/card-select.js")
     register_plugin_stylesheet("/plugins/atr26_game/assets/css/atr26-game.css")

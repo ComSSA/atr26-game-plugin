@@ -179,9 +179,16 @@
 document.addEventListener('DOMContentLoaded', function() {
   const csrfNonce = init.csrfNonce;
 
+  function nonceForm() {
+    const fd = new FormData();
+    fd.append('nonce', csrfNonce);
+    return fd;
+  }
+
   document.getElementById('add-weapon-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
+    formData.append('nonce', csrfNonce);
     fetch('/atr26_game/admin/weapons', {
       method: 'POST',
       headers: { 'CSRF-Token': csrfNonce },
@@ -194,6 +201,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('add-loot-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
+    formData.append('nonce', csrfNonce);
     fetch('/atr26_game/admin/loot-table', {
       method: 'POST',
       headers: { 'CSRF-Token': csrfNonce },
@@ -209,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
       fetch('/atr26_game/admin/weapons/' + id + '/delete', {
         method: 'POST',
         headers: { 'CSRF-Token': csrfNonce },
+        body: nonceForm(),
       }).then(r => r.json()).then(data => {
         if (data.success) location.reload();
       });
@@ -221,6 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
       fetch('/atr26_game/admin/loot-table/' + id + '/delete', {
         method: 'POST',
         headers: { 'CSRF-Token': csrfNonce },
+        body: nonceForm(),
       }).then(r => r.json()).then(data => {
         if (data.success) location.reload();
       });
