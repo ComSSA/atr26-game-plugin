@@ -1,3 +1,5 @@
+from sqlalchemy import inspect, text
+
 from CTFd.plugins import (
     register_admin_plugin_menu_bar,
     register_plugin_assets_directory,
@@ -9,8 +11,20 @@ from CTFd.plugins import (
 from .models import *  # noqa: F401,F403 — registers all models with SQLAlchemy
 
 
+def _migrate_db(app):
+    inspector = inspect(app.db.engine)
+    if "atr26_weapons" in inspector.get_table_names():
+        existing = {c["name"] for c in inspector.get_columns("atr26_weapons")}
+        if "hint_text" not in existing:
+            app.db.session.execute(
+                text('ALTER TABLE atr26_weapons ADD COLUMN hint_text TEXT DEFAULT ""')
+            )
+            app.db.session.commit()
+
+
 def load(app):
     app.db.create_all()
+    _migrate_db(app)
 
     register_plugin_assets_directory(app, base_path="/plugins/atr26_game/assets/")
 
