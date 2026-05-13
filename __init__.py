@@ -15,11 +15,26 @@ from .models import *  # noqa: F401,F403 — registers all models with SQLAlchem
 
 def _migrate_db(app):
     inspector = inspect(app.db.engine)
+
     if "atr26_weapons" in inspector.get_table_names():
         existing = {c["name"] for c in inspector.get_columns("atr26_weapons")}
+        migrations = []
         if "hint_text" not in existing:
+            migrations.append('ALTER TABLE atr26_weapons ADD COLUMN hint_text TEXT DEFAULT ""')
+        if "min_damage" not in existing:
+            migrations.append("ALTER TABLE atr26_weapons ADD COLUMN min_damage INT DEFAULT 0")
+        if "max_damage" not in existing:
+            migrations.append("ALTER TABLE atr26_weapons ADD COLUMN max_damage INT DEFAULT 0")
+        for stmt in migrations:
+            app.db.session.execute(text(stmt))
+        if migrations:
+            app.db.session.commit()
+
+    if "atr26_team_inventory" in inspector.get_table_names():
+        existing = {c["name"] for c in inspector.get_columns("atr26_team_inventory")}
+        if "rolled_damage" not in existing:
             app.db.session.execute(
-                text('ALTER TABLE atr26_weapons ADD COLUMN hint_text TEXT DEFAULT ""')
+                text("ALTER TABLE atr26_team_inventory ADD COLUMN rolled_damage INT DEFAULT NULL")
             )
             app.db.session.commit()
 

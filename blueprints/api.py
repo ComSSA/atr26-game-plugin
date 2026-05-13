@@ -105,10 +105,15 @@ def card_select():
 
     offer.selected = True
 
+    lo = selected_weapon.min_damage or 0
+    hi = selected_weapon.max_damage or 0
+    rolled = random.randint(min(lo, hi), max(lo, hi)) if hi > lo else lo
+
     inv = TeamInventory(
         team_id=team.id,
         weapon_id=selected_weapon_id,
         source_challenge_id=offer.challenge_id,
+        rolled_damage=rolled,
     )
     db.session.add(inv)
 

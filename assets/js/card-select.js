@@ -42,7 +42,7 @@
           <span class="atr26-card-rarity rarity-${esc(weapon.rarity)}">${esc(weapon.rarity)}</span>
           <span class="atr26-card-damage-type">${esc(weapon.damage_type)}</span>
           <p class="atr26-card-desc">${esc(weapon.description)}</p>
-          <div class="atr26-card-damage">DMG: ${esc(String(weapon.base_damage))}</div>
+          <div class="atr26-card-damage">DMG: ${esc(String(weapon.min_damage))}–${esc(String(weapon.max_damage))}</div>
         </div>
       </button>`;
   }

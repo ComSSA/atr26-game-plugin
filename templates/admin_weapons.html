@@ -44,7 +44,13 @@
           </div>
           <div class="col-md-4 mb-3">
             <label class="form-label">Damage Type</label>
-            <input type="text" class="form-control" name="damage_type" value="physical">
+            <select class="form-select" name="damage_type">
+              <option value="fire">Fire</option>
+              <option value="frost">Frost</option>
+              <option value="lightning">Lightning</option>
+              <option value="poison">Poison</option>
+              <option value="arcane">Arcane</option>
+            </select>
           </div>
         </div>
         <div class="row">
@@ -57,9 +63,15 @@
             <textarea class="form-control" name="hint_text" rows="2" placeholder="Leave blank for no hint"></textarea>
           </div>
           <div class="col-md-4 mb-3 d-flex flex-column gap-2">
-            <div>
-              <label class="form-label">Base Damage</label>
-              <input type="number" class="form-control" name="base_damage" value="0">
+            <div class="d-flex gap-2">
+              <div class="flex-fill">
+                <label class="form-label">Min Damage</label>
+                <input type="number" class="form-control" name="min_damage" value="0" min="0">
+              </div>
+              <div class="flex-fill">
+                <label class="form-label">Max Damage</label>
+                <input type="number" class="form-control" name="max_damage" value="0" min="0">
+              </div>
             </div>
             <div>
               <label class="form-label">Border Color</label>
@@ -89,7 +101,7 @@
             <th>Name</th>
             <th>Rarity</th>
             <th>Damage Type</th>
-            <th>Base Damage</th>
+            <th>Damage Range</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -100,7 +112,7 @@
             <td>{{ weapon.name }}</td>
             <td>{{ weapon.rarity }}</td>
             <td>{{ weapon.damage_type }}</td>
-            <td>{{ weapon.base_damage }}</td>
+            <td>{{ weapon.min_damage }} – {{ weapon.max_damage }}</td>
             <td>
               <button class="btn btn-sm btn-danger delete-weapon" data-weapon-id="{{ weapon.id }}">Delete</button>
             </td>

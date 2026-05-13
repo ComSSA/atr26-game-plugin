@@ -32,6 +32,11 @@
                 <span class="atr26-card-rarity"
                       :class="'rarity-' + slots[slot].inventory_item.weapon.rarity"
                       x-text="slots[slot].inventory_item.weapon.rarity"></span>
+                <span class="atr26-damage-type"
+                      :class="'dmgtype-' + slots[slot].inventory_item.weapon.damage_type"
+                      x-text="slots[slot].inventory_item.weapon.damage_type"></span>
+                <div class="atr26-rolled-damage"
+                     x-text="'DMG: ' + (slots[slot].inventory_item.rolled_damage ?? '?')"></div>
               </div>
             </template>
             <template x-if="!slots[slot]">
@@ -56,7 +61,11 @@
                :style="'border-left: 3px solid ' + item.weapon.card_border_color"
                @click="!submitted && assignSelected(item)">
             <strong x-text="item.weapon.name"></strong>
-            <span class="atr26-card-rarity" :class="'rarity-' + item.weapon.rarity" x-text="item.weapon.rarity"></span>
+            <div class="d-flex align-items-center gap-2 mt-1">
+              <span class="atr26-card-rarity" :class="'rarity-' + item.weapon.rarity" x-text="item.weapon.rarity"></span>
+              <span class="atr26-damage-type" :class="'dmgtype-' + item.weapon.damage_type" x-text="item.weapon.damage_type"></span>
+              <span class="atr26-rolled-damage" x-text="'DMG: ' + (item.rolled_damage ?? '?')"></span>
+            </div>
           </div>
         </template>
         <p x-show="inventory.length === 0" class="text-muted">No weapons in inventory.</p>

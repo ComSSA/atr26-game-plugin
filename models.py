@@ -15,7 +15,8 @@ class Weapon(db.Model):
     damage_type = db.Column(db.String(64), nullable=False, default="physical")
     icon_path = db.Column(db.Text, default="")
     card_border_color = db.Column(db.String(7), default="#808080")
-    base_damage = db.Column(db.Integer, default=0)
+    min_damage = db.Column(db.Integer, default=0)
+    max_damage = db.Column(db.Integer, default=0)
     hint_text = db.Column(db.Text, default="")
 
     def serialize(self):
@@ -27,7 +28,8 @@ class Weapon(db.Model):
             "damage_type": self.damage_type,
             "icon_path": self.icon_path,
             "card_border_color": self.card_border_color,
-            "base_damage": self.base_damage,
+            "min_damage": self.min_damage,
+            "max_damage": self.max_damage,
         }
 
 
@@ -109,6 +111,7 @@ class TeamInventory(db.Model):
     source_challenge_id = db.Column(
         db.Integer, db.ForeignKey("challenges.id"), nullable=True
     )
+    rolled_damage = db.Column(db.Integer, nullable=True)
     acquired_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     team = relationship("Teams", foreign_keys=[team_id])
@@ -119,6 +122,7 @@ class TeamInventory(db.Model):
             "id": self.id,
             "team_id": self.team_id,
             "weapon": self.weapon.serialize() if self.weapon else None,
+            "rolled_damage": self.rolled_damage,
             "source_challenge_id": self.source_challenge_id,
             "acquired_date": str(self.acquired_date),
         }

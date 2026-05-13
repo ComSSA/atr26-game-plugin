@@ -34,10 +34,11 @@
   margin-top: 0.5rem;
 }
 
-.atr26-card-damage {
+.atr26-card-damage,
+.atr26-rolled-damage {
   font-weight: 600;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
   color: #ff6b6b;
 }
 
@@ -63,13 +64,20 @@
   color: #ffa726;
 }
 
-.atr26-card-damage-type {
+.atr26-card-damage-type,
+.atr26-damage-type {
   display: inline-block;
-  margin-left: 0.5rem;
   font-size: 0.75rem;
-  color: #888;
+  font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
+
+.dmgtype-fire    { color: #ff6b35; }
+.dmgtype-frost   { color: #74d7f7; }
+.dmgtype-lightning { color: #f9ca24; }
+.dmgtype-poison  { color: #6ab04c; }
+.dmgtype-arcane  { color: #a29bfe; }
 
 /* === Card Selection Modal === */
 

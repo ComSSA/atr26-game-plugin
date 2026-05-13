@@ -34,10 +34,11 @@ def create_weapon():
         name=request.form.get("name", "Unnamed Weapon"),
         description=request.form.get("description", ""),
         rarity=request.form.get("rarity", "common"),
-        damage_type=request.form.get("damage_type", "physical"),
+        damage_type=request.form.get("damage_type", "fire"),
         icon_path=request.form.get("icon_path", ""),
         card_border_color=request.form.get("card_border_color", "#808080"),
-        base_damage=int(request.form.get("base_damage", 0)),
+        min_damage=int(request.form.get("min_damage", 0)),
+        max_damage=int(request.form.get("max_damage", 0)),
         hint_text=request.form.get("hint_text", ""),
     )
     db.session.add(weapon)
@@ -57,7 +58,8 @@ def update_weapon(weapon_id):
     weapon.damage_type = request.form.get("damage_type", weapon.damage_type)
     weapon.icon_path = request.form.get("icon_path", weapon.icon_path)
     weapon.card_border_color = request.form.get("card_border_color", weapon.card_border_color)
-    weapon.base_damage = int(request.form.get("base_damage", weapon.base_damage))
+    weapon.min_damage = int(request.form.get("min_damage", weapon.min_damage))
+    weapon.max_damage = int(request.form.get("max_damage", weapon.max_damage))
     weapon.hint_text = request.form.get("hint_text", weapon.hint_text)
     db.session.commit()
     return jsonify({"success": True, "data": weapon.serialize()})
