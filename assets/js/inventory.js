@@ -1,5 +1,5 @@
 document.addEventListener("alpine:init", function () {
-  Alpine.data("Inventory", function () {
+  window.Alpine.data("Inventory", function () {
     return {
       items: [],
       loading: true,

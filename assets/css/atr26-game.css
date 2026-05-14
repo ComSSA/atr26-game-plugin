@@ -34,11 +34,10 @@
   margin-top: 0.5rem;
 }
 
-.atr26-card-damage,
-.atr26-rolled-damage {
+.atr26-card-damage {
   font-weight: 600;
-  font-size: 0.85rem;
-  margin-top: 0.35rem;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
   color: #ff6b6b;
 }
 
@@ -64,180 +63,98 @@
   color: #ffa726;
 }
 
-.atr26-card-damage-type,
-.atr26-damage-type {
+.atr26-card-damage-type {
   display: inline-block;
+  margin-left: 0.5rem;
   font-size: 0.75rem;
-  font-weight: 600;
+  color: #888;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
 }
 
-.dmgtype-fire    { color: #ff6b35; }
-.dmgtype-frost   { color: #74d7f7; }
-.dmgtype-lightning { color: #f9ca24; }
-.dmgtype-poison  { color: #6ab04c; }
-.dmgtype-arcane  { color: #a29bfe; }
-
-/* === Card Selection Modal === */
-
-#atr26-modal-overlay {
+/* === Card Selection Overlay === */
+.atr26-card-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
   z-index: 10000;
-  background: rgba(0, 0, 0, 0.88);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
-  transition: opacity 0.28s ease;
-}
-
-#atr26-modal-overlay.closing {
   opacity: 0;
-}
-
-.atr26-modal {
-  background: #1e2130;
-  border: 1px solid #2e3350;
-  border-radius: 12px;
-  padding: 2.5rem 2rem;
-  max-width: 680px;
-  width: 100%;
-  text-align: center;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.65);
-  color: #e8eaf6;
-}
-
-.atr26-modal-title {
-  font-size: 1.65rem;
-  font-weight: 700;
-  margin: 0 0 0.45rem;
-  color: #c5c8f5;
-}
-
-.atr26-modal-subtitle {
-  margin: 0 0 2rem;
-  font-size: 0.9rem;
-  color: #7880a8;
-}
-
-/* === Weapon Cards === */
-
-.atr26-weapon-cards {
-  display: flex;
-  gap: 1.5rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-bottom: 2rem;
-}
-
-.atr26-weapon-card {
-  flex: 1 1 200px;
-  max-width: 260px;
-  background: #252b40;
-  border: 3px solid #808080;
-  border-radius: 12px;
-  cursor: pointer;
-  text-align: left;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  overflow: hidden;
-  transition: transform 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease;
-  animation: cardReveal 0.5s ease-out both;
-}
-
-.atr26-card-a { animation-delay: 0.15s; }
-.atr26-card-b { animation-delay: 0.35s; }
-
-@keyframes cardReveal {
-  from { opacity: 0; transform: translateY(30px) scale(0.92); }
-  to   { opacity: 1; transform: translateY(0)   scale(1); }
-}
-
-.atr26-weapon-card:focus-visible {
-  outline: 2px solid #7c85f0;
-  outline-offset: 2px;
-}
-
-.atr26-weapon-card:hover:not(.dimmed) {
-  transform: translateY(-4px);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.12);
-}
-
-.atr26-weapon-card.selected {
-  box-shadow: 0 0 0 3px rgba(124, 133, 240, 0.35);
-  transform: translateY(-4px);
-}
-
-.atr26-weapon-card.dimmed {
-  opacity: 0.3;
-  transform: none;
+  transition: opacity 0.3s;
   pointer-events: none;
 }
 
-.atr26-card-image {
+.atr26-card-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.atr26-card-selection-container {
+  text-align: center;
+  max-width: 700px;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #1a1f32;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 2rem;
 }
 
-.atr26-card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.atr26-card-placeholder {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: #343b58;
-}
-
-.atr26-card-body {
-  padding: 0.9rem 1rem 1rem;
-}
-
-/* === Claim Button === */
-
-.atr26-claim-btn {
-  background: #5c67e0;
+.atr26-card-selection-title {
   color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 0.6rem 2.75rem;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+
+.atr26-card-selection-cards {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.atr26-selectable-card {
+  background: #1a1a2e;
+  border: 3px solid #808080;
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 280px;
+  text-align: center;
   cursor: pointer;
-  transition: background 0.14s ease, opacity 0.14s ease;
+  transition: transform 0.2s, box-shadow 0.3s;
+  animation: cardReveal 0.6s ease-out both;
+  color: #eee;
 }
 
-.atr26-claim-btn:hover:not(:disabled) {
-  background: #7c85f0;
+.atr26-selectable-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
 }
 
-.atr26-claim-btn:focus-visible {
-  outline: 2px solid #7c85f0;
-  outline-offset: 3px;
+.atr26-card-a {
+  animation-delay: 0.2s;
 }
 
-.atr26-claim-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.atr26-card-b {
+  animation-delay: 0.5s;
+}
+
+@keyframes cardReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* === Hint Reveal === */
-
 .atr26-hint-reveal {
-  color: #e8eaf6;
-  animation: cardReveal 0.4s ease-out;
+  color: #fff;
+  animation: cardReveal 0.5s ease-out;
 }
 
 .atr26-hint-content {
@@ -245,10 +162,9 @@
   border: 1px solid #0f3460;
   border-radius: 12px;
   padding: 1.5rem;
-  font-size: 1.05rem;
-  margin: 1rem 0 1.5rem;
+  font-size: 1.1rem;
+  margin-top: 1rem;
   color: #e0e0e0;
-  text-align: left;
 }
 
 /* === Inventory Grid === */
@@ -294,6 +210,22 @@
 .atr26-loadout-slot-filled {
   border-style: solid;
   border-color: #42a5f5;
+}
+
+.atr26-loadout-slot-selected {
+  border-style: solid;
+  border-color: #00cec9;
+  box-shadow: 0 0 0 2px rgba(0, 206, 201, 0.35);
+}
+
+.atr26-sidebar-weapon-pending {
+  outline: 2px solid #fdcb6e;
+  outline-offset: 2px;
+  background: #252540;
+}
+
+.atr26-sidebar-weapon-inloadout {
+  opacity: 0.75;
 }
 
 .atr26-slot-number {

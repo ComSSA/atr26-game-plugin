@@ -1,10 +1,6 @@
-import os
-
-from flask import Blueprint as _BP
-from sqlalchemy import inspect, text
-
 from CTFd.plugins import (
     register_admin_plugin_menu_bar,
+    register_plugin_assets_directory,
     register_plugin_script,
     register_plugin_stylesheet,
     register_user_page_menu_bar,
@@ -13,43 +9,41 @@ from CTFd.plugins import (
 from .models import *  # noqa: F401,F403 — registers all models with SQLAlchemy
 
 
-def _migrate_db(app):
-    inspector = inspect(app.db.engine)
-
-    if "atr26_weapons" in inspector.get_table_names():
-        existing = {c["name"] for c in inspector.get_columns("atr26_weapons")}
-        migrations = []
-        if "hint_text" not in existing:
-            migrations.append('ALTER TABLE atr26_weapons ADD COLUMN hint_text TEXT DEFAULT ""')
-        if "min_damage" not in existing:
-            migrations.append("ALTER TABLE atr26_weapons ADD COLUMN min_damage INT DEFAULT 0")
-        if "max_damage" not in existing:
-            migrations.append("ALTER TABLE atr26_weapons ADD COLUMN max_damage INT DEFAULT 0")
-        for stmt in migrations:
-            app.db.session.execute(text(stmt))
-        if migrations:
-            app.db.session.commit()
-
-    if "atr26_team_inventory" in inspector.get_table_names():
-        existing = {c["name"] for c in inspector.get_columns("atr26_team_inventory")}
-        if "rolled_damage" not in existing:
-            app.db.session.execute(
-                text("ALTER TABLE atr26_team_inventory ADD COLUMN rolled_damage INT DEFAULT NULL")
-            )
-            app.db.session.commit()
-
-
 def load(app):
     app.db.create_all()
-    _migrate_db(app)
 
-    _assets_bp = _BP(
-        "atr26_game_static",
-        __name__,
-        static_folder=os.path.join(os.path.dirname(__file__), "assets"),
-        static_url_path="/plugins/atr26_game/assets",
-    )
-    app.register_blueprint(_assets_bp)
+    from .hooks import register_solve_loot_hooks
+
+    register_solve_loot_hooks(app)
+
+    @app.cli.command("atr26-seed-weapons")
+    def atr26_seed_weapons_cli():
+        """Load or update Weapon rows from weapons_seed.json in the plugin directory."""
+        import json
+        import os
+
+        from .seed import upsert_weapons_from_records
+
+        root = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(root, "weapons_seed.json")
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict) and "weapons" in data:
+            records = data["weapons"]
+        else:
+            records = data
+        c, u = upsert_weapons_from_records(records)
+        print(f"atr26-seed-weapons: created={c} updated={u} ({path})")
+
+    @app.cli.command("atr26-seed-test-challenges")
+    def atr26_seed_test_challenges_cli():
+        """Insert ATR26-branded standard challenges with flags and loot tags (idempotent)."""
+        from .seed_challenges import seed_test_challenges
+
+        created, skipped = seed_test_challenges()
+        print(f"atr26-seed-test-challenges: created={created} skipped={skipped}")
+
+    register_plugin_assets_directory(app, base_path="/plugins/atr26_game/assets/")
 
     register_plugin_script("/plugins/atr26_game/assets/js/card-select.js")
     register_plugin_stylesheet("/plugins/atr26_game/assets/css/atr26-game.css")

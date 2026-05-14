@@ -1,0 +1,71 @@
+{# Shared admin actions: seed weapons (weapons_seed.json) + seed test challenges. #}
+<div class="atr26-admin-seed-panel d-flex flex-wrap gap-2 mb-2">
+  <button type="button" class="btn btn-outline-primary btn-sm" data-atr26-seed-weapons>
+    Seed weapons
+  </button>
+  <button type="button" class="btn btn-outline-secondary btn-sm" data-atr26-seed-test-chals>
+    Seed test challenges
+  </button>
+</div>
+<script>
+(function () {
+  if (window.__atr26AdminSeedTools) return;
+  window.__atr26AdminSeedTools = true;
+  document.addEventListener("click", function (e) {
+    var csrf = typeof init !== "undefined" && init.csrfNonce ? init.csrfNonce : "";
+    if (e.target.closest("[data-atr26-seed-weapons]")) {
+      e.preventDefault();
+      fetch("/atr26_game/admin/weapons/seed", {
+        method: "POST",
+        headers: { "CSRF-Token": csrf, "Content-Type": "application/json" },
+        body: "{}",
+      })
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (data) {
+          if (data.success) {
+            alert(
+              "Weapons: created " + data.data.created + ", updated " + data.data.updated
+            );
+            location.reload();
+          } else {
+            alert(data.error || "Seed failed");
+          }
+        })
+        .catch(function () {
+          alert("Request failed");
+        });
+      return;
+    }
+    if (e.target.closest("[data-atr26-seed-test-chals]")) {
+      e.preventDefault();
+      fetch("/atr26_game/admin/test-challenges/seed", {
+        method: "POST",
+        headers: { "CSRF-Token": csrf, "Content-Type": "application/json" },
+        body: "{}",
+      })
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (data) {
+          if (data.success) {
+            alert(
+              "Test challenges: created " +
+                data.data.created +
+                ", skipped " +
+                data.data.skipped +
+                " (already present)."
+            );
+            location.href = "/admin/challenges";
+          } else {
+            alert(data.error || "Failed");
+          }
+        })
+        .catch(function () {
+          alert("Request failed");
+        });
+    }
+  });
+})();
+</script>
