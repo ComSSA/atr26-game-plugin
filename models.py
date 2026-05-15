@@ -9,87 +9,63 @@ class Weapon(db.Model):
     __tablename__ = "atr26_weapons"
 
     id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String(80), unique=True, nullable=False, index=True)
     name = db.Column(db.String(128), nullable=False)
     description = db.Column(db.Text, default="")
     rarity = db.Column(db.String(32), nullable=False, default="common")
     damage_type = db.Column(db.String(64), nullable=False, default="physical")
     icon_path = db.Column(db.Text, default="")
     card_border_color = db.Column(db.String(7), default="#808080")
-    min_damage = db.Column(db.Integer, default=0)
-    max_damage = db.Column(db.Integer, default=0)
-    hint_text = db.Column(db.Text, default="")
+    enabled = db.Column(db.Boolean, nullable=False, default=True)
 
     def serialize(self):
         return {
             "id": self.id,
+            "slug": self.slug,
             "name": self.name,
             "description": self.description,
             "rarity": self.rarity,
             "damage_type": self.damage_type,
             "icon_path": self.icon_path,
+            "icon": self.icon_path,
             "card_border_color": self.card_border_color,
-            "min_damage": self.min_damage,
-            "max_damage": self.max_damage,
+            "enabled": self.enabled,
         }
 
 
-class LootTable(db.Model):
-    __tablename__ = "atr26_loot_table"
-    __table_args__ = (
-        db.UniqueConstraint("challenge_id", "weapon_id", name="uq_loot_challenge_weapon"),
-    )
+class CardDraw(db.Model):
+    __tablename__ = "atr26_card_draws"
+    __table_args__ = (db.UniqueConstraint("solve_id", name="uq_card_draw_solve"),)
 
     id = db.Column(db.Integer, primary_key=True)
+    solve_id = db.Column(
+        db.Integer, db.ForeignKey("solves.id", ondelete="CASCADE"), nullable=False, unique=True
+    )
+    team_id = db.Column(db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     challenge_id = db.Column(
         db.Integer, db.ForeignKey("challenges.id", ondelete="CASCADE"), nullable=False
     )
-    weapon_id = db.Column(
-        db.Integer, db.ForeignKey("atr26_weapons.id", ondelete="CASCADE"), nullable=False
+    weapon_slug_a = db.Column(
+        db.String(80), db.ForeignKey("atr26_weapons.slug", ondelete="CASCADE"), nullable=False
     )
-    weight = db.Column(db.Integer, default=1, nullable=False)
-
-    challenge = relationship("Challenges", foreign_keys=[challenge_id])
-    weapon = relationship("Weapon", foreign_keys=[weapon_id])
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "challenge_id": self.challenge_id,
-            "weapon_id": self.weapon_id,
-            "weight": self.weight,
-        }
-
-
-class PendingCardOffer(db.Model):
-    __tablename__ = "atr26_pending_offers"
-    __table_args__ = (
-        db.UniqueConstraint("team_id", "challenge_id", name="uq_offer_team_challenge"),
+    weapon_slug_b = db.Column(
+        db.String(80), db.ForeignKey("atr26_weapons.slug", ondelete="CASCADE"), nullable=False
     )
-
-    id = db.Column(db.Integer, primary_key=True)
-    team_id = db.Column(
-        db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=False
-    )
-    challenge_id = db.Column(
-        db.Integer, db.ForeignKey("challenges.id", ondelete="CASCADE"), nullable=False
-    )
-    weapon_id_a = db.Column(
-        db.Integer, db.ForeignKey("atr26_weapons.id"), nullable=False
-    )
-    weapon_id_b = db.Column(
-        db.Integer, db.ForeignKey("atr26_weapons.id"), nullable=False
-    )
-    selected = db.Column(db.Boolean, default=False)
+    rolled_damage_a = db.Column(db.Integer, nullable=False)
+    rolled_damage_b = db.Column(db.Integer, nullable=False)
+    picked_slug = db.Column(db.String(80), nullable=True)
+    picked_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    team = relationship("Teams", foreign_keys=[team_id])
-    weapon_a = relationship("Weapon", foreign_keys=[weapon_id_a])
-    weapon_b = relationship("Weapon", foreign_keys=[weapon_id_b])
+    solve = relationship("Solves", foreign_keys=[solve_id])
 
-    def serialize(self):
-        return {
+    def serialize_offer(self):
+        wa = Weapon.query.filter_by(slug=self.weapon_slug_a).first()
+        wb = Weapon.query.filter_by(slug=self.weapon_slug_b).first()
+        out = {
             "id": self.id,
-            "team_id": self.team_id,
+            "solve_id": self.solve_id,
             "challenge_id": self.challenge_id,
             "weapon_id_a": self.weapon_id_a,
             "weapon_id_b": self.weapon_id_b,
@@ -98,6 +74,15 @@ class PendingCardOffer(db.Model):
             "selected": self.selected,
             "created_at": str(self.created_at),
         }
+        if wa:
+            d = wa.serialize()
+            d["rolled_damage"] = self.rolled_damage_a
+            out["weapon_a"] = d
+        if wb:
+            d = wb.serialize()
+            d["rolled_damage"] = self.rolled_damage_b
+            out["weapon_b"] = d
+        return out
 
 
 class TeamInventory(db.Model):
@@ -105,27 +90,41 @@ class TeamInventory(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     team_id = db.Column(
-        db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=False
+        db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=True
     )
-    weapon_id = db.Column(
-        db.Integer, db.ForeignKey("atr26_weapons.id", ondelete="CASCADE"), nullable=False
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=True
     )
+    weapon_slug = db.Column(
+        db.String(80), db.ForeignKey("atr26_weapons.slug", ondelete="CASCADE"), nullable=False
+    )
+    rolled_damage = db.Column(db.Integer, nullable=False)
     source_challenge_id = db.Column(
         db.Integer, db.ForeignKey("challenges.id"), nullable=True
     )
-    rolled_damage = db.Column(db.Integer, nullable=True)
+    card_draw_id = db.Column(
+        db.Integer, db.ForeignKey("atr26_card_draws.id", ondelete="SET NULL"), nullable=True
+    )
     acquired_date = db.Column(db.DateTime, default=datetime.utcnow)
 
     team = relationship("Teams", foreign_keys=[team_id])
-    weapon = relationship("Weapon", foreign_keys=[weapon_id])
+    user = relationship("Users", foreign_keys=[user_id])
+    card_draw = relationship("CardDraw", foreign_keys=[card_draw_id])
+
+    @property
+    def weapon(self):
+        return Weapon.query.filter_by(slug=self.weapon_slug).first()
 
     def serialize(self):
         return {
             "id": self.id,
             "team_id": self.team_id,
+            "user_id": self.user_id,
             "weapon": self.weapon.serialize() if self.weapon else None,
+            "weapon_slug": self.weapon_slug,
             "rolled_damage": self.rolled_damage,
             "source_challenge_id": self.source_challenge_id,
+            "card_draw_id": self.card_draw_id,
             "acquired_date": str(self.acquired_date),
         }
 
@@ -133,12 +132,18 @@ class TeamInventory(db.Model):
 class TeamLoadout(db.Model):
     __tablename__ = "atr26_team_loadout"
     __table_args__ = (
-        db.UniqueConstraint("team_id", "slot_number", name="uq_loadout_team_slot"),
+        db.CheckConstraint(
+            "(team_id IS NOT NULL AND user_id IS NULL) OR (team_id IS NULL AND user_id IS NOT NULL)",
+            name="atr26_loadout_one_owner",
+        ),
     )
 
     id = db.Column(db.Integer, primary_key=True)
     team_id = db.Column(
-        db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=False
+        db.Integer, db.ForeignKey("teams.id", ondelete="CASCADE"), nullable=True
+    )
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=True
     )
     slot_number = db.Column(db.Integer, nullable=False)
     inventory_id = db.Column(
@@ -153,6 +158,7 @@ class TeamLoadout(db.Model):
         return {
             "id": self.id,
             "team_id": self.team_id,
+            "user_id": self.user_id,
             "slot_number": self.slot_number,
             "inventory_item": self.inventory_item.serialize() if self.inventory_item else None,
             "submitted_at": str(self.submitted_at) if self.submitted_at else None,

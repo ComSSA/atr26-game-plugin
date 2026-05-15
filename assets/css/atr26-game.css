@@ -147,8 +147,7 @@
   text-overflow: ellipsis;
 }
 
-.atr26-card-damage,
-.atr26-rolled-damage {
+.atr26-card-damage {
   font-weight: 600;
   font-size: 0.75rem;
   color: #CCAA7A;
@@ -202,18 +201,24 @@
 
 #atr26-modal-overlay {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
   z-index: 10000;
   background: rgba(27, 20, 12, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
-  transition: opacity 0.28s ease;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
 }
 
-#atr26-modal-overlay.closing {
-  opacity: 0;
+.atr26-card-overlay.active {
+  opacity: 1;
+  pointer-events: all;
 }
 
 .atr26-modal {
@@ -229,8 +234,9 @@
   font-family: 'Share Tech Mono', monospace;
 }
 
-.atr26-modal-title {
-  font-size: 1.65rem;
+.atr26-card-selection-title {
+  color: #fff;
+  font-size: 1.8rem;
   font-weight: 700;
   margin: 0 0 0.45rem;
   color: #EBD8AD;
@@ -247,10 +253,9 @@
 
 .atr26-weapon-cards {
   display: flex;
-  gap: 1.5rem;
+  gap: 2rem;
   justify-content: center;
   flex-wrap: wrap;
-  margin-bottom: 2rem;
 }
 
 .atr26-weapon-card {
@@ -486,7 +491,6 @@
 }
 
 /* === Hint Reveal === */
-
 .atr26-hint-reveal {
   color: #DEC697;
   animation: cardReveal 0.4s ease-out;
@@ -677,6 +681,22 @@
 .atr26-loadout-slot-filled {
   border-style: solid;
   border-color: #CCAA7A;
+}
+
+.atr26-loadout-slot-selected {
+  border-style: solid;
+  border-color: #00cec9;
+  box-shadow: 0 0 0 2px rgba(0, 206, 201, 0.35);
+}
+
+.atr26-sidebar-weapon-pending {
+  outline: 2px solid #fdcb6e;
+  outline-offset: 2px;
+  background: #252540;
+}
+
+.atr26-sidebar-weapon-inloadout {
+  opacity: 0.75;
 }
 
 .atr26-slot-number {

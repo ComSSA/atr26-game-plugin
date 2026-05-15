@@ -1,14 +1,26 @@
 document.addEventListener("alpine:init", function () {
-  Alpine.data("LoadoutSelector", function () {
+  window.Alpine.data("LoadoutSelector", function () {
     return {
       inventory: [],
       slots: { 1: null, 2: null, 3: null, 4: null, 5: null },
       hints: [],
       submitted: false,
       loading: true,
+      /** Pick a slot, then a weapon from the list (left highlight). */
       selectedSlot: null,
+      /** Pick a weapon, then a slot (right highlight). */
+      pendingItem: null,
+      saveMessage: "",
+      saveError: "",
 
-      async init() {
+      init() {
+        this.reload();
+      },
+
+      async reload() {
+        this.loading = true;
+        this.saveMessage = "";
+        this.saveError = "";
         try {
           const [invResp, loadoutResp, hintsResp] = await Promise.all([
             fetch("/atr26_game/api/inventory", { headers: { "CSRF-Token": window.init.csrfNonce } }),
@@ -22,8 +34,10 @@ document.addEventListener("alpine:init", function () {
           if (invData.success) this.inventory = invData.data;
           if (loadoutData.success) {
             this.submitted = loadoutData.data.submitted;
-            for (const [slot, entry] of Object.entries(loadoutData.data.slots)) {
-              this.slots[parseInt(slot)] = entry;
+            const existingSlots = loadoutData.data.slots;
+            for (let s = 1; s <= 5; s++) this.slots[s] = null;
+            for (const [slot, entry] of Object.entries(existingSlots)) {
+              this.slots[parseInt(slot, 10)] = entry;
             }
           }
           if (hintsData.success) this.hints = hintsData.data;
@@ -59,7 +73,16 @@ document.addEventListener("alpine:init", function () {
       },
 
       removeFromSlot(slot) {
+        if (this.submitted) return;
         this.slots[slot] = null;
+        if (this.selectedSlot === slot) this.selectedSlot = null;
+      },
+
+      clearAllSlots() {
+        if (this.submitted) return;
+        for (let s = 1; s <= 5; s++) this.slots[s] = null;
+        this.selectedSlot = null;
+        this.pendingItem = null;
       },
 
       weaponSprite(damage_type, rarity) {
@@ -89,18 +112,28 @@ document.addEventListener("alpine:init", function () {
       },
 
       async saveLoadout() {
+        this.saveMessage = "";
+        this.saveError = "";
         const slotData = {};
         for (const [slot, entry] of Object.entries(this.slots)) {
           if (entry && entry.inventory_item) slotData[slot] = entry.inventory_item.id;
         }
         try {
-          await fetch("/atr26_game/api/loadout", {
+          const resp = await fetch("/atr26_game/api/loadout", {
             method: "POST",
             headers: { "Content-Type": "application/json", "CSRF-Token": window.init.csrfNonce },
             body: JSON.stringify({ slots: slotData }),
           });
+          const data = await resp.json();
+          if (data.success) {
+            this.saveMessage = "Draft saved.";
+            await this.reload();
+          } else {
+            this.saveError = data.error || "Save failed";
+          }
         } catch (e) {
           console.error("[atr26_game] Failed to save loadout:", e);
+          this.saveError = "Network error while saving.";
         }
       },
 
@@ -111,6 +144,7 @@ document.addEventListener("alpine:init", function () {
       async submitLoadout() {
         if (!confirm("Are you sure? Once submitted, your loadout cannot be changed.")) return;
         await this.saveLoadout();
+        if (this.saveError) return;
         try {
           const resp = await fetch("/atr26_game/api/loadout/submit", {
             method: "POST",
@@ -120,6 +154,7 @@ document.addEventListener("alpine:init", function () {
           if (data.success) this.submitted = true;
         } catch (e) {
           console.error("[atr26_game] Failed to submit loadout:", e);
+          this.saveError = "Network error while submitting.";
         }
       },
     };
