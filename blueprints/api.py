@@ -9,6 +9,141 @@ from CTFd.utils.user import get_current_user
 
 api_bp = Blueprint("atr26_game_api", __name__, url_prefix="/atr26_game/api")
 
+LOOT_TIER_WEIGHTS = {
+    "easy":   {"common": 48, "uncommon": 32, "rare": 14, "legendary": 6},
+    "medium": {"common": 28, "uncommon": 32, "rare": 28, "legendary": 12},
+    "hard":   {"common": 12, "uncommon": 22, "rare": 33, "legendary": 33},
+}
+
+
+def _challenge_tier(challenge, tag_values=None):
+    """Return the loot tier string, or None if loot:off is set."""
+    if tag_values is None:
+        from CTFd.models import Tags
+        tag_values = (
+            {t.value.lower() for t in Tags.query.filter_by(challenge_id=challenge.id).all()}
+            if challenge else set()
+        )
+    if "loot:off" in tag_values:
+        return None
+    for tag in tag_values:
+        if tag.startswith("loot:") and tag[5:] in LOOT_TIER_WEIGHTS:
+            return tag[5:]
+    if challenge is None:
+        return "medium"
+    cat = (challenge.category or "").strip().lower()
+    if cat in LOOT_TIER_WEIGHTS:
+        return cat
+    v = challenge.value or 0
+    if v <= 100:
+        return "easy"
+    if v <= 300:
+        return "medium"
+    return "hard"
+
+
+def _pick_by_rarity(weapons, tier):
+    """Roll rarity first, then pick a random weapon of that rarity.
+
+    Constraints:
+      easy   — legendary never appears
+      medium — both cards cannot be legendary simultaneously
+      hard   — no restrictions
+    """
+    tier_w = LOOT_TIER_WEIGHTS[tier]
+
+    by_rarity = {}
+    for w in weapons:
+        r = (w.rarity or "common").lower()
+        by_rarity.setdefault(r, []).append(w)
+
+    rarities = list(tier_w.keys())
+    if tier == "easy":
+        rarities = [r for r in rarities if r != "legendary"]
+
+    available = [(r, tier_w[r]) for r in rarities if by_rarity.get(r)]
+    if not available:
+        return None, None
+
+    a_rarities, a_weights = zip(*available)
+    rarity_a = random.choices(list(a_rarities), weights=list(a_weights))[0]
+    weapon_a = random.choice(by_rarity[rarity_a])
+
+    b_pool = list(available)
+    if tier == "medium" and rarity_a == "legendary":
+        b_pool = [(r, w) for r, w in b_pool if r != "legendary"]
+    if not b_pool:
+        b_pool = list(available)
+
+    b_rarities, b_weights = zip(*b_pool)
+    rarity_b = random.choices(list(b_rarities), weights=list(b_weights))[0]
+
+    def _different(w):
+        if w.id == weapon_a.id:
+            return False
+        same_concept = (
+            (w.name or "").strip().lower() == (weapon_a.name or "").strip().lower()
+            and (w.damage_type or "").lower() == (weapon_a.damage_type or "").lower()
+            and (w.rarity or "").lower() == (weapon_a.rarity or "").lower()
+        )
+        return not same_concept
+
+    candidates = [w for w in by_rarity[rarity_b] if _different(w)]
+    # Fallback: relax to just different ID if no conceptually distinct weapon exists
+    if not candidates:
+        candidates = [w for w in by_rarity[rarity_b] if w.id != weapon_a.id]
+    weapon_b = random.choice(candidates if candidates else by_rarity[rarity_b])
+
+    return weapon_a, weapon_b
+
+
+@api_bp.route("/pending-offers", methods=["GET"])
+@authed_only
+def get_pending_offers():
+    user = get_current_user()
+    team = user.team
+    if not team:
+        return jsonify({"success": False, "error": "You must be on a team"}), 403
+
+    from ..models import PendingCardOffer
+
+    offers = (
+        PendingCardOffer.query
+        .filter_by(team_id=team.id, selected=False)
+        .order_by(PendingCardOffer.created_at.asc())
+        .all()
+    )
+    return jsonify({"success": True, "data": [o.serialize() for o in offers]})
+
+
+@api_bp.route("/activity-summary", methods=["GET"])
+@authed_only
+def activity_summary():
+    user = get_current_user()
+    team = user.team
+    if not team:
+        return jsonify({"success": False, "error": "You must be on a team"}), 403
+
+    from CTFd.models import Challenges as CTFdChallenges
+    from ..models import PendingCardOffer
+
+    offers = (
+        PendingCardOffer.query
+        .filter_by(team_id=team.id)
+        .order_by(PendingCardOffer.created_at.desc())
+        .all()
+    )
+
+    result = []
+    for offer in offers:
+        challenge = CTFdChallenges.query.get(offer.challenge_id)
+        result.append({
+            "offer": offer.serialize(),
+            "challenge_name": challenge.name if challenge else f"Challenge #{offer.challenge_id}",
+        })
+
+    return jsonify({"success": True, "data": result})
+
 
 @api_bp.route("/inventory", methods=["GET"])
 @authed_only
@@ -37,7 +172,8 @@ def card_offer():
     if not challenge_id:
         return jsonify({"success": False, "error": "challenge_id required"}), 400
 
-    from ..models import LootTable, PendingCardOffer
+    from CTFd.models import Challenges as CTFdChallenges, Tags
+    from ..models import LootTable, PendingCardOffer, Weapon
 
     existing = PendingCardOffer.query.filter_by(
         team_id=team.id, challenge_id=challenge_id
@@ -49,27 +185,50 @@ def card_offer():
     if existing and existing.selected:
         return jsonify({"success": False, "error": "Already selected a card for this challenge"}), 400
 
+    challenge_obj = CTFdChallenges.query.get(challenge_id)
+    tag_values = {t.value.lower() for t in Tags.query.filter_by(challenge_id=challenge_id).all()}
+
+    tier = _challenge_tier(challenge_obj, tag_values)
+    if tier is None:
+        return jsonify({"success": False, "error": "Loot disabled for this challenge"})
+
+    # Challenge-specific loot table takes priority over the global pool
     entries = LootTable.query.filter_by(challenge_id=challenge_id).all()
-    if not entries:
-        return jsonify({"success": False, "error": "No loot configured for this challenge"}), 404
+    if entries:
+        weights = [e.weight for e in entries]
+        if len(entries) == 1:
+            entry_a = entry_b = entries[0]
+        else:
+            idx_a = random.choices(range(len(entries)), weights=weights)[0]
+            remaining = [(e, w) for i, (e, w) in enumerate(zip(entries, weights)) if i != idx_a]
+            rem_weights = [r[1] for r in remaining]
+            idx_b = random.choices(range(len(remaining)), weights=rem_weights)[0]
+            entry_a = entries[idx_a]
+            entry_b = remaining[idx_b][0]
+        offer = PendingCardOffer(
+            team_id=team.id,
+            challenge_id=challenge_id,
+            weapon_id_a=entry_a.weapon_id,
+            weapon_id_b=entry_b.weapon_id,
+        )
+        db.session.add(offer)
+        db.session.commit()
+        return jsonify({"success": True, "data": offer.serialize()})
 
-    weights = [e.weight for e in entries]
+    # Global rarity-first pool
+    weapons = Weapon.query.all()
+    if not weapons:
+        return jsonify({"success": False, "error": "No weapons have been configured yet"})
 
-    if len(entries) == 1:
-        entry_a = entry_b = entries[0]
-    else:
-        idx_a = random.choices(range(len(entries)), weights=weights)[0]
-        remaining = [(e, w) for i, (e, w) in enumerate(zip(entries, weights)) if i != idx_a]
-        rem_weights = [r[1] for r in remaining]
-        idx_b = random.choices(range(len(remaining)), weights=rem_weights)[0]
-        entry_a = entries[idx_a]
-        entry_b = remaining[idx_b][0]
+    weapon_a, weapon_b = _pick_by_rarity(weapons, tier)
+    if weapon_a is None:
+        return jsonify({"success": False, "error": "No weapons available for this tier"}), 500
 
     offer = PendingCardOffer(
         team_id=team.id,
         challenge_id=challenge_id,
-        weapon_id_a=entry_a.weapon_id,
-        weapon_id_b=entry_b.weapon_id,
+        weapon_id_a=weapon_a.id,
+        weapon_id_b=weapon_b.id,
     )
     db.session.add(offer)
     db.session.commit()
@@ -105,9 +264,13 @@ def card_select():
 
     offer.selected = True
 
-    lo = selected_weapon.min_damage or 0
-    hi = selected_weapon.max_damage or 0
-    rolled = random.randint(min(lo, hi), max(lo, hi)) if hi > lo else lo
+    selected_weapon = (
+        offer.weapon_a if selected_weapon_id == offer.weapon_id_a else offer.weapon_b
+    )
+
+    RARITY_DAMAGE = {"common": (10, 20), "uncommon": (20, 30), "rare": (30, 40), "legendary": (40, 50)}
+    lo, hi = RARITY_DAMAGE.get((selected_weapon.rarity or "common").lower(), (10, 20))
+    rolled = random.randint(lo, hi)
 
     inv = TeamInventory(
         team_id=team.id,
@@ -116,10 +279,6 @@ def card_select():
         rolled_damage=rolled,
     )
     db.session.add(inv)
-
-    selected_weapon = (
-        offer.weapon_a if selected_weapon_id == offer.weapon_id_a else offer.weapon_b
-    )
 
     hint = None
     if selected_weapon.hint_text:

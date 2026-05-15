@@ -11,26 +11,18 @@ document.addEventListener("alpine:init", function () {
       async init() {
         try {
           const [invResp, loadoutResp, hintsResp] = await Promise.all([
-            fetch("/atr26_game/api/inventory", {
-              headers: { "CSRF-Token": window.init.csrfNonce },
-            }),
-            fetch("/atr26_game/api/loadout", {
-              headers: { "CSRF-Token": window.init.csrfNonce },
-            }),
-            fetch("/atr26_game/api/hints", {
-              headers: { "CSRF-Token": window.init.csrfNonce },
-            }),
+            fetch("/atr26_game/api/inventory", { headers: { "CSRF-Token": window.init.csrfNonce } }),
+            fetch("/atr26_game/api/loadout",   { headers: { "CSRF-Token": window.init.csrfNonce } }),
+            fetch("/atr26_game/api/hints",     { headers: { "CSRF-Token": window.init.csrfNonce } }),
           ]);
-
-          const invData = await invResp.json();
+          const invData     = await invResp.json();
           const loadoutData = await loadoutResp.json();
-          const hintsData = await hintsResp.json();
+          const hintsData   = await hintsResp.json();
 
           if (invData.success) this.inventory = invData.data;
           if (loadoutData.success) {
             this.submitted = loadoutData.data.submitted;
-            const existingSlots = loadoutData.data.slots;
-            for (const [slot, entry] of Object.entries(existingSlots)) {
+            for (const [slot, entry] of Object.entries(loadoutData.data.slots)) {
               this.slots[parseInt(slot)] = entry;
             }
           }
@@ -42,14 +34,27 @@ document.addEventListener("alpine:init", function () {
       },
 
       openSlotPicker(slot) {
-        this.selectedSlot = slot;
+        this.selectedSlot = this.selectedSlot === slot ? null : slot;
+      },
+
+      isAssigned(item) {
+        return Object.values(this.slots).some(
+          s => s && s.inventory_item && s.inventory_item.id === item.id
+        );
+      },
+
+      slotOfItem(item) {
+        for (const [slot, entry] of Object.entries(this.slots)) {
+          if (entry && entry.inventory_item && entry.inventory_item.id === item.id)
+            return slot;
+        }
+        return null;
       },
 
       assignSelected(item) {
         if (this.selectedSlot === null) return;
-        this.slots[this.selectedSlot] = {
-          inventory_item: item,
-        };
+        if (this.isAssigned(item)) return;
+        this.slots[this.selectedSlot] = { inventory_item: item };
         this.selectedSlot = null;
       },
 
@@ -57,21 +62,41 @@ document.addEventListener("alpine:init", function () {
         this.slots[slot] = null;
       },
 
+      weaponSprite(damage_type, rarity) {
+        const t = (damage_type || "fire").toLowerCase();
+        const r = (rarity || "common").toLowerCase();
+        return `/plugins/atr26_game/assets/img/${t}_${r}.png`;
+      },
+
+      typeEmoji(type) {
+        const m = { fire:"🔥", frost:"❄️", lightning:"⚡", poison:"☠️", arcane:"🔮" };
+        return m[(type || "").toLowerCase()] || "⚔️";
+      },
+
+      rarityColor(rarity) {
+        const m = { common:"#C39D81", uncommon:"#CCAA7A", rare:"#009dff", legendary:"#a0493c" };
+        return m[(rarity || "").toLowerCase()] || "#7B2D21";
+      },
+
+      typeColor(type) {
+        const m = { fire:"#a0493c", frost:"#009dff", lightning:"#CCAA7A", poison:"#7a9a4a", arcane:"#9a6ab0" };
+        return m[(type || "").toLowerCase()] || "#C39D81";
+      },
+
+      damageRange(rarity) {
+        const m = { common:"10 – 20", uncommon:"20 – 30", rare:"30 – 40", legendary:"40 – 50" };
+        return m[(rarity || "").toLowerCase()] || "?";
+      },
+
       async saveLoadout() {
         const slotData = {};
         for (const [slot, entry] of Object.entries(this.slots)) {
-          if (entry && entry.inventory_item) {
-            slotData[slot] = entry.inventory_item.id;
-          }
+          if (entry && entry.inventory_item) slotData[slot] = entry.inventory_item.id;
         }
-
         try {
           await fetch("/atr26_game/api/loadout", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "CSRF-Token": window.init.csrfNonce,
-            },
+            headers: { "Content-Type": "application/json", "CSRF-Token": window.init.csrfNonce },
             body: JSON.stringify({ slots: slotData }),
           });
         } catch (e) {
@@ -79,23 +104,20 @@ document.addEventListener("alpine:init", function () {
         }
       },
 
+      clearLoadout() {
+        this.slots = { 1: null, 2: null, 3: null, 4: null, 5: null };
+      },
+
       async submitLoadout() {
-        if (!confirm("Are you sure? Once submitted, your loadout cannot be changed.")) {
-          return;
-        }
+        if (!confirm("Are you sure? Once submitted, your loadout cannot be changed.")) return;
         await this.saveLoadout();
         try {
           const resp = await fetch("/atr26_game/api/loadout/submit", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "CSRF-Token": window.init.csrfNonce,
-            },
+            headers: { "Content-Type": "application/json", "CSRF-Token": window.init.csrfNonce },
           });
           const data = await resp.json();
-          if (data.success) {
-            this.submitted = true;
-          }
+          if (data.success) this.submitted = true;
         } catch (e) {
           console.error("[atr26_game] Failed to submit loadout:", e);
         }

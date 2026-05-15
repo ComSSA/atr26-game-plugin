@@ -1,83 +1,202 @@
-/* === Card Component === */
+/* atr26-game plugin styles — palette matches atr26-theme
+   #2B251D  dark brown  (card/panel bg)
+   #DEC697  warm cream  (primary text)
+   #C39D81  muted warm  (secondary text)
+   #CCAA7A  tan/gold    (highlight)
+   #7B2D21  dark red    (borders, accents)
+   #a0493c  mid red     (hover, active)
+   #EBD8AD  parchment   (lightest, labels)
+*/
+
+/* === Inventory Cards === */
 .atr26-card {
-  background: #1a1a2e;
-  border: 2px solid #808080;
-  border-radius: 12px;
-  padding: 1rem;
+  background: #2B251D;
+  border: 1px solid #7B2D21;
+  border-radius: 4px;
+  padding: 0;
+  overflow: hidden;
   text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  position: relative;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
+.atr26-card .atr26-card-body {
+  padding: 0.4rem 0.6rem 0.5rem;
+}
+
 .atr26-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 16px rgba(123, 45, 33, 0.5);
 }
 
 .atr26-card-icon {
-  font-size: 3rem;
-  margin-bottom: 0.75rem;
+  width: 100%;
+  height: 160px;
+  background: #1a1410;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  overflow: hidden;
+  border-bottom: 1px solid #7B2D21;
+}
+
+/* === Hover detail overlay === */
+.atr26-weapon-card {
+  position: relative;
+}
+
+.atr26-weapon-card:hover .atr26-card-detail {
+  transform: translateY(0);
+}
+
+.atr26-card-detail {
+  position: absolute;
+  inset: 0;
+  background: rgba(27, 20, 12, 0.95);
+  border-radius: 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem;
+  gap: 0.4rem;
+  transform: translateY(100%);
+  transition: transform 0.2s ease;
+}
+
+.atr26-card:hover .atr26-card-detail {
+  transform: translateY(0);
+}
+
+.atr26-detail-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  align-items: center;
+  margin-bottom: 0.2rem;
+}
+
+.atr26-detail-stats {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  background: #1a1410;
+  border: 1px solid #7B2D21;
+  border-radius: 2px;
+}
+
+.atr26-detail-stat {
+  flex: 1;
+  padding: 0.35rem 0.25rem;
+}
+
+.atr26-detail-divider {
+  width: 1px;
+  align-self: stretch;
+  background: #7B2D21;
+}
+
+.atr26-detail-label {
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #C39D81;
+  margin-bottom: 0.15rem;
+}
+
+.atr26-detail-value {
+  font-size: 1.6rem;
+  color: #CCAA7A;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.atr26-detail-range {
+  font-size: 0.75rem;
+  color: #DEC697;
+  margin-top: 0.15rem;
+}
+
+.atr26-detail-desc {
+  font-size: 0.65rem;
+  color: #C39D81;
+  line-height: 1.4;
+  margin: 0;
+  text-align: center;
 }
 
 .atr26-card-icon img {
-  max-width: 80px;
-  max-height: 80px;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0.5rem;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
 }
 
 .atr26-card-name {
   font-weight: 700;
-  margin-bottom: 0.25rem;
-}
-
-.atr26-card-desc {
-  font-size: 0.85rem;
-  color: #aaa;
-  margin-top: 0.5rem;
+  color: #DEC697;
+  margin-bottom: 0.15rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .atr26-card-damage,
 .atr26-rolled-damage {
   font-weight: 600;
-  font-size: 0.85rem;
-  margin-top: 0.35rem;
-  color: #ff6b6b;
+  font-size: 0.75rem;
+  color: #CCAA7A;
+  border-top: 1px solid #3a2e24;
+  margin-top: 0.2rem;
+  padding-top: 0.2rem;
+}
+
+.atr26-card-emoji {
+  font-size: 3rem;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 /* === Rarity Colors === */
 .atr26-card-rarity,
 .rarity-common {
-  color: #9e9e9e;
+  display: block;
+  color: #C39D81;
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   letter-spacing: 0.5px;
+  line-height: 1;
+  margin-bottom: 0.15rem;
 }
 
-.rarity-rare {
-  color: #42a5f5;
-}
-
-.rarity-epic {
-  color: #ab47bc;
-}
-
-.rarity-legendary {
-  color: #ffa726;
-}
+.rarity-uncommon  { color: #CCAA7A; }
+.rarity-rare      { color: #009dff; }
+.rarity-legendary { color: #a0493c; }
 
 .atr26-card-damage-type,
 .atr26-damage-type {
-  display: inline-block;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+  color: #C39D81;
+  line-height: 1;
 }
 
-.dmgtype-fire    { color: #ff6b35; }
-.dmgtype-frost   { color: #74d7f7; }
-.dmgtype-lightning { color: #f9ca24; }
-.dmgtype-poison  { color: #6ab04c; }
-.dmgtype-arcane  { color: #a29bfe; }
+.dmgtype-fire      { color: #a0493c; }
+.dmgtype-frost     { color: #009dff; }
+.dmgtype-lightning { color: #CCAA7A; }
+.dmgtype-poison    { color: #7a9a4a; }
+.dmgtype-arcane    { color: #9a6ab0; }
 
 /* === Card Selection Modal === */
 
@@ -85,7 +204,7 @@
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: rgba(0, 0, 0, 0.88);
+  background: rgba(27, 20, 12, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,31 +217,33 @@
 }
 
 .atr26-modal {
-  background: #1e2130;
-  border: 1px solid #2e3350;
-  border-radius: 12px;
+  background: #2B251D;
+  border: 1px solid #7B2D21;
+  border-radius: 4px;
   padding: 2.5rem 2rem;
   max-width: 680px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.65);
-  color: #e8eaf6;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  color: #DEC697;
+  font-family: 'Share Tech Mono', monospace;
 }
 
 .atr26-modal-title {
   font-size: 1.65rem;
   font-weight: 700;
   margin: 0 0 0.45rem;
-  color: #c5c8f5;
+  color: #EBD8AD;
+  letter-spacing: 2px;
 }
 
 .atr26-modal-subtitle {
   margin: 0 0 2rem;
   font-size: 0.9rem;
-  color: #7880a8;
+  color: #C39D81;
 }
 
-/* === Weapon Cards === */
+/* === Weapon Cards (selection popup) === */
 
 .atr26-weapon-cards {
   display: flex;
@@ -135,14 +256,14 @@
 .atr26-weapon-card {
   flex: 1 1 200px;
   max-width: 260px;
-  background: #252b40;
-  border: 3px solid #808080;
-  border-radius: 12px;
+  background: #1a1410;
+  border: 1px solid #7B2D21;
+  border-radius: 4px;
   cursor: pointer;
   text-align: left;
   padding: 0;
-  font: inherit;
-  color: inherit;
+  font-family: 'Share Tech Mono', monospace;
+  color: #DEC697;
   overflow: hidden;
   transition: transform 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease;
   animation: cardReveal 0.5s ease-out both;
@@ -157,30 +278,36 @@
 }
 
 .atr26-weapon-card:focus-visible {
-  outline: 2px solid #7c85f0;
+  outline: 2px solid #CCAA7A;
   outline-offset: 2px;
 }
 
 .atr26-weapon-card:hover:not(.dimmed) {
   transform: translateY(-4px);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 16px rgba(123, 45, 33, 0.5);
+}
+
+.atr26-weapon-card.dimmed:hover {
+  opacity: 0.6;
+  transform: translateY(-2px);
 }
 
 .atr26-weapon-card.selected {
-  box-shadow: 0 0 0 3px rgba(124, 133, 240, 0.35);
+  border-color: #CCAA7A;
+  box-shadow: 0 0 16px rgba(204, 170, 122, 0.3);
   transform: translateY(-4px);
 }
 
 .atr26-weapon-card.dimmed {
-  opacity: 0.3;
+  opacity: 0.35;
   transform: none;
-  pointer-events: none;
 }
 
 .atr26-card-image {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #1a1f32;
+  aspect-ratio: 4 / 3;
+  background: #1a1410;
+  border-bottom: 1px solid #7B2D21;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -190,75 +317,330 @@
 .atr26-card-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
 }
 
 .atr26-card-placeholder {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: #343b58;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #7B2D21;
+  background: #2B251D;
 }
 
 .atr26-card-body {
-  padding: 0.9rem 1rem 1rem;
+  padding: 0.75rem 0.9rem 0.9rem;
 }
 
 /* === Claim Button === */
 
 .atr26-claim-btn {
-  background: #5c67e0;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
+  background: #7B2D21;
+  color: #DEC697;
+  border: 1px solid #7B2D21;
+  border-radius: 4px;
   padding: 0.6rem 2.75rem;
   font-size: 1rem;
+  font-family: 'Share Tech Mono', monospace;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.14s ease, opacity 0.14s ease;
+  transition: background 0.14s ease, color 0.14s ease, opacity 0.14s ease;
+  letter-spacing: 1px;
 }
 
 .atr26-claim-btn:hover:not(:disabled) {
-  background: #7c85f0;
+  background: #a0493c;
+  border-color: #a0493c;
+  color: #EBD8AD;
 }
 
 .atr26-claim-btn:focus-visible {
-  outline: 2px solid #7c85f0;
+  outline: 2px solid #CCAA7A;
   outline-offset: 3px;
 }
 
 .atr26-claim-btn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: not-allowed;
+}
+
+.atr26-claim-btn--success {
+  background: #4a7a3a;
+  border-color: #4a7a3a;
+  color: #DEC697;
+}
+
+.atr26-claim-btn--success:hover:not(:disabled) {
+  background: #5c9147;
+  border-color: #5c9147;
+  color: #EBD8AD;
+}
+
+.atr26-claim-btn--clear {
+  background: #3a3028;
+  border-color: #7B2D21;
+  color: #C39D81;
+}
+
+.atr26-claim-btn--clear:hover:not(:disabled) {
+  background: #4a3c30;
+  border-color: #a0493c;
+  color: #DEC697;
+}
+
+/* === Claim Success Screen === */
+
+.atr26-claim-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  animation: claimSuccessIn 0.45s ease-out both;
+  position: relative;
+  padding: 0.5rem 0;
+}
+
+@keyframes claimSuccessIn {
+  from { opacity: 0; transform: scale(0.82); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.atr26-success-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(204, 170, 122, 0.18) 0%, transparent 68%);
+  animation: glowPulse 1.6s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+  50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.25); }
+}
+
+.atr26-success-card {
+  position: relative;
+  z-index: 1;
+  width: 170px;
+  border: 2px solid #CCAA7A;
+  border-radius: 4px;
+  overflow: hidden;
+  animation: weaponGlow 1.6s ease-in-out infinite alternate;
+}
+
+.atr26-success-card .atr26-card-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #1a1410;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.atr26-success-card .atr26-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+@keyframes weaponGlow {
+  from { box-shadow: 0 0 16px rgba(204, 170, 122, 0.35); }
+  to   { box-shadow: 0 0 48px rgba(204, 170, 122, 0.85), 0 0 80px rgba(204, 170, 122, 0.3); }
+}
+
+.atr26-success-label {
+  position: relative;
+  z-index: 1;
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #CCAA7A;
+  font-family: 'Share Tech Mono', monospace;
+  animation: fadeInUp 0.4s 0.3s ease-out both;
+}
+
+.atr26-success-name {
+  position: relative;
+  z-index: 1;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  font-family: 'Share Tech Mono', monospace;
+  animation: fadeInUp 0.4s 0.45s ease-out both;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* === Hint Reveal === */
 
 .atr26-hint-reveal {
-  color: #e8eaf6;
+  color: #DEC697;
   animation: cardReveal 0.4s ease-out;
 }
 
 .atr26-hint-content {
-  background: #16213e;
-  border: 1px solid #0f3460;
-  border-radius: 12px;
+  background: #1a1410;
+  border: 1px solid #7B2D21;
+  border-radius: 4px;
   padding: 1.5rem;
   font-size: 1.05rem;
   margin: 1rem 0 1.5rem;
-  color: #e0e0e0;
+  color: #DEC697;
   text-align: left;
+}
+
+/* === Challenge Card Claim Badge === */
+.atr26-chall-badge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0.2rem 0;
+  pointer-events: none;
+}
+
+.atr26-chall-badge.claimed {
+  background: rgba(30, 45, 20, 0.90);
+  color: #8aaa60;
+  border-top: 1px solid #6a8a48;
+}
+
+.atr26-chall-badge.unclaimed {
+  background: rgba(60, 35, 10, 0.90);
+  color: #CCAA7A;
+  border-top: 1px solid #7B2D21;
+}
+
+/* === Challenge Modal Claim Section === */
+.atr26-modal-claim-wrap {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.atr26-modal-claimed {
+  display: inline-block;
+  color: #8aaa60;
+  border: 1px solid #6a8a48;
+  border-radius: 3px;
+  padding: 0.3rem 1rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+}
+
+.atr26-modal-claim-btn {
+  background: #7B2D21;
+  color: #EBD8AD;
+  border: none;
+  border-radius: 3px;
+  padding: 0.4rem 1.2rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.atr26-modal-claim-btn:hover {
+  background: #a0493c;
+  color: #fff;
 }
 
 /* === Inventory Grid === */
 .atr26-inventory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 0.75rem;
+  padding-bottom: 1.5rem;
+}
+
+/* === Shared headings === */
+.atr26-section-title {
+  font-family: 'Share Tech Mono', monospace;
+  color: #2B251D;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.atr26-section-sub {
+  font-family: 'Share Tech Mono', monospace;
+  color: #C39D81;
+  font-size: 0.8rem;
+}
+
+.atr26-section-title .atr26-section-sub {
+  color: #c0594a;
+}
+
+.atr26-divider {
+  border-color: #7B2D21;
+  opacity: 0.4;
+  margin: 1rem 0;
 }
 
 /* === Loadout === */
+.atr26-loadout-weapons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+  gap: 0.6rem;
+}
+
+.atr26-loadout-weapons-grid .atr26-card-icon {
+  height: 100px;
+}
+
+.atr26-loadout-weapons-grid .atr26-card-icon img {
+  padding: 0.15rem;
+}
+
+.atr26-card-selectable {
+  cursor: pointer;
+  outline: 1px dashed #CCAA7A;
+}
+
+.atr26-card-selectable:hover {
+  outline-color: #EBD8AD;
+  box-shadow: 0 0 10px rgba(204, 170, 122, 0.3);
+}
+
+.atr26-card-assigned {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.atr26-assigned-badge {
+  background: #CCAA7A;
+  color: #2B251D;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.15rem 0;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
 .atr26-loadout-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -272,40 +654,56 @@
 }
 
 .atr26-loadout-slot {
-  background: #1a1a2e;
-  border: 2px dashed #444;
-  border-radius: 12px;
-  padding: 1.5rem 1rem;
+  background: #2B251D;
+  border: 1px dashed #7B2D21;
+  border-radius: 4px;
+  padding: 0.6rem 0.5rem;
   text-align: center;
-  min-height: 140px;
+  min-height: 110px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  font-family: 'Share Tech Mono', monospace;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .atr26-loadout-slot:hover {
-  border-color: #666;
-  background: #1f1f3a;
+  border-color: #a0493c;
+  box-shadow: 0 2px 10px rgba(123, 45, 33, 0.3);
 }
 
 .atr26-loadout-slot-filled {
   border-style: solid;
-  border-color: #42a5f5;
+  border-color: #CCAA7A;
 }
 
 .atr26-slot-number {
   font-weight: 700;
-  font-size: 0.8rem;
-  color: #888;
+  font-size: 0.75rem;
+  color: #C39D81;
   text-transform: uppercase;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
+  letter-spacing: 1px;
+}
+
+.atr26-slot-weapon .atr26-card-name {
+  font-size: 0.75rem;
+}
+
+.atr26-slot-img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  margin-bottom: 0.2rem;
 }
 
 .atr26-slot-empty-label {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  color: #C39D81;
 }
 
 /* === Inventory Sidebar === */
@@ -315,16 +713,25 @@
 }
 
 .atr26-sidebar-weapon {
-  background: #1a1a2e;
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
+  background: #2B251D;
+  border: 1px solid #7B2D21;
+  border-radius: 4px;
+  padding: 0.6rem 0.85rem;
+  margin-bottom: 0.4rem;
   cursor: pointer;
-  transition: background 0.2s;
+  font-family: 'Share Tech Mono', monospace;
+  color: #DEC697;
+  transition: border-color 0.2s, background 0.2s;
 }
 
 .atr26-sidebar-weapon:hover {
-  background: #1f1f3a;
+  border-color: #a0493c;
+  background: #332c23;
+}
+
+.atr26-sidebar-weapon strong {
+  color: #EBD8AD;
+  font-size: 0.9rem;
 }
 
 /* === Hints === */
@@ -334,15 +741,16 @@
 }
 
 .atr26-hint-card {
-  background: #16213e;
-  border: 1px solid #0f3460;
-  border-radius: 8px;
+  background: #2B251D;
+  border: 1px solid #7B2D21;
+  border-radius: 4px;
   padding: 0.75rem 1rem;
   margin-bottom: 0.5rem;
 }
 
 .atr26-hint-card p {
   margin: 0;
-  color: #ccc;
+  color: #DEC697;
   font-size: 0.9rem;
+  font-family: 'Share Tech Mono', monospace;
 }

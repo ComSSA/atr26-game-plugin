@@ -21,6 +21,53 @@
     </li>
   </ul>
 
+  <!-- Catalog Tools -->
+  <div class="card mb-4">
+    <div class="card-header"><h4>Catalog tools</h4></div>
+    <div class="card-body">
+      <ul class="nav nav-tabs mb-3" id="catalogTabs">
+        <li class="nav-item">
+          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-seed-weapons">Seed weapons</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-seed-challenges">Seed test challenges</button>
+        </li>
+      </ul>
+      <div class="tab-content">
+
+        <div class="tab-pane fade show active" id="tab-seed-weapons">
+          <p>
+            Loot drops use all <strong>enabled</strong> weapons.
+            Tag challenges with <code class="text-danger">loot:easy</code>,
+            <code class="text-danger">loot:medium</code>, or
+            <code class="text-danger">loot:hard</code>
+            (and <code class="text-danger">loot:off</code> to disable).
+            Each card rolls a <strong>rarity</strong> from the tier table, then a random weapon in that rarity.
+            <strong>Easy</strong> never rolls legendary rarity;
+            <strong>medium</strong> is stingy and cannot show two legendaries in the same pair;
+            <strong>hard</strong> is the jackpot tier.
+          </p>
+          <p class="text-muted small">
+            <strong>Seed weapons</strong> loads or updates rows from
+            <code class="text-danger">weapons_seed.json</code> (safe to re-run).
+          </p>
+          <button class="btn btn-primary" id="btn-seed-weapons">Run: Seed weapons</button>
+          <span class="ms-3 text-muted small" id="seed-weapons-result"></span>
+        </div>
+
+        <div class="tab-pane fade" id="tab-seed-challenges">
+          <p>
+            <strong>Seed test challenges</strong> adds standard challenges under <code class="text-danger">ATR26</code>
+            (flags in descriptions); re-run skips existing names.
+          </p>
+          <button class="btn btn-secondary" id="btn-seed-challenges">Run: Seed test challenges</button>
+          <span class="ms-3 text-muted small" id="seed-challenges-result"></span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Add Weapon Form -->
   <div class="card mb-4">
     <div class="card-header">
@@ -37,8 +84,8 @@
             <label class="form-label">Rarity</label>
             <select class="form-select" name="rarity">
               <option value="common">Common</option>
+              <option value="uncommon">Uncommon</option>
               <option value="rare">Rare</option>
-              <option value="epic">Epic</option>
               <option value="legendary">Legendary</option>
             </select>
           </div>
@@ -114,6 +161,17 @@
             <td>{{ weapon.damage_type }}</td>
             <td>{{ weapon.min_damage }} – {{ weapon.max_damage }}</td>
             <td>
+              <button class="btn btn-sm btn-primary edit-weapon me-1"
+                data-weapon-id="{{ weapon.id }}"
+                data-name="{{ weapon.name }}"
+                data-description="{{ weapon.description }}"
+                data-rarity="{{ weapon.rarity }}"
+                data-damage-type="{{ weapon.damage_type }}"
+                data-min-damage="{{ weapon.min_damage }}"
+                data-max-damage="{{ weapon.max_damage }}"
+                data-card-border-color="{{ weapon.card_border_color }}"
+                data-icon-path="{{ weapon.icon_path }}"
+                data-hint-text="{{ weapon.hint_text }}">Edit</button>
               <button class="btn btn-sm btn-danger delete-weapon" data-weapon-id="{{ weapon.id }}">Delete</button>
             </td>
           </tr>
@@ -128,61 +186,58 @@
     </div>
   </div>
 
-  <!-- Loot Table -->
-  <div class="card mb-4">
-    <div class="card-header">
-      <h4>Loot Table</h4>
-    </div>
-    <div class="card-body">
-      <form id="add-loot-form" class="row mb-3">
-        <div class="col-md-4">
-          <label class="form-label">Challenge ID</label>
-          <input type="number" class="form-control" name="challenge_id" required>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Weapon</label>
-          <select class="form-select" name="weapon_id">
-            {% for weapon in weapons %}
-            <option value="{{ weapon.id }}">{{ weapon.name }} ({{ weapon.rarity }})</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Weight</label>
-          <input type="number" class="form-control" name="weight" value="1" min="1">
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button type="submit" class="btn btn-success">Add Entry</button>
-        </div>
-      </form>
+</div>
 
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Challenge ID</th>
-            <th>Weapon</th>
-            <th>Weight</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for entry in loot_entries %}
-          <tr>
-            <td>{{ entry.challenge_id }}</td>
-            <td>{{ entry.weapon.name if entry.weapon else 'Unknown' }}</td>
-            <td>{{ entry.weight }}</td>
-            <td>
-              <button class="btn btn-sm btn-danger delete-loot" data-entry-id="{{ entry.id }}">Delete</button>
-            </td>
-          </tr>
-          {% endfor %}
-          {% if not loot_entries %}
-          <tr>
-            <td colspan="4" class="text-center text-muted">No loot table entries yet.</td>
-          </tr>
-          {% endif %}
-        </tbody>
-      </table>
+<!-- Edit Weapon Modal -->
+<div class="modal fade" id="editWeaponModal" tabindex="-1" aria-labelledby="editWeaponModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editWeaponModalLabel">Edit Weapon</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-weapon-form">
+          <input type="hidden" name="weapon_id" id="edit-weapon-id">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-control" name="name" id="edit-name" required>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Rarity</label>
+              <select class="form-select" name="rarity" id="edit-rarity">
+                <option value="common">Common</option>
+                <option value="uncommon">Uncommon</option>
+                <option value="rare">Rare</option>
+                <option value="legendary">Legendary</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Damage Type</label>
+              <select class="form-select" name="damage_type" id="edit-damage-type">
+                <option value="fire">Fire</option>
+                <option value="frost">Frost</option>
+                <option value="lightning">Lightning</option>
+                <option value="poison">Poison</option>
+                <option value="arcane">Arcane</option>
+              </select>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Min Damage</label>
+              <input type="number" class="form-control" name="min_damage" id="edit-min-damage" min="0">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Max Damage</label>
+              <input type="number" class="form-control" name="max_damage" id="edit-max-damage" min="0">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="save-weapon-btn">Save Changes</button>
+      </div>
     </div>
   </div>
 </div>
@@ -210,11 +265,26 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  document.getElementById('add-loot-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
+  const editModal = new bootstrap.Modal(document.getElementById('editWeaponModal'));
+
+  document.querySelectorAll('.edit-weapon').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const d = this.dataset;
+      document.getElementById('edit-weapon-id').value  = d.weaponId;
+      document.getElementById('edit-name').value        = d.name;
+      document.getElementById('edit-rarity').value      = d.rarity;
+      document.getElementById('edit-damage-type').value = d.damageType;
+      document.getElementById('edit-min-damage').value  = d.minDamage;
+      document.getElementById('edit-max-damage').value  = d.maxDamage;
+      editModal.show();
+    });
+  });
+
+  document.getElementById('save-weapon-btn').addEventListener('click', function() {
+    const id = document.getElementById('edit-weapon-id').value;
+    const formData = new FormData(document.getElementById('edit-weapon-form'));
     formData.append('nonce', csrfNonce);
-    fetch('/atr26_game/admin/loot-table', {
+    fetch('/atr26_game/admin/weapons/' + id + '/update', {
       method: 'POST',
       headers: { 'CSRF-Token': csrfNonce },
       body: formData,
@@ -236,18 +306,47 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  document.querySelectorAll('.delete-loot').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      const id = this.dataset.entryId;
-      fetch('/atr26_game/admin/loot-table/' + id + '/delete', {
-        method: 'POST',
-        headers: { 'CSRF-Token': csrfNonce },
-        body: nonceForm(),
-      }).then(r => r.json()).then(data => {
-        if (data.success) location.reload();
-      });
+  document.getElementById('btn-seed-weapons').addEventListener('click', function() {
+    const btn = this;
+    btn.disabled = true;
+    fetch('/atr26_game/admin/catalog/seed-weapons', {
+      method: 'POST',
+      headers: { 'CSRF-Token': csrfNonce },
+      body: nonceForm(),
+    }).then(r => r.json()).then(data => {
+      btn.disabled = false;
+      const el = document.getElementById('seed-weapons-result');
+      if (data.success) {
+        el.textContent = `Done — ${data.data.created} created, ${data.data.updated} updated.`;
+        el.className = 'ms-3 small text-success';
+        location.reload();
+      } else {
+        el.textContent = data.error || 'Error';
+        el.className = 'ms-3 small text-danger';
+      }
     });
   });
+
+  document.getElementById('btn-seed-challenges').addEventListener('click', function() {
+    const btn = this;
+    btn.disabled = true;
+    fetch('/atr26_game/admin/catalog/seed-challenges', {
+      method: 'POST',
+      headers: { 'CSRF-Token': csrfNonce },
+      body: nonceForm(),
+    }).then(r => r.json()).then(data => {
+      btn.disabled = false;
+      const el = document.getElementById('seed-challenges-result');
+      if (data.success) {
+        el.textContent = `Done — ${data.data.created} created, ${data.data.skipped} skipped.`;
+        el.className = 'ms-3 small text-success';
+      } else {
+        el.textContent = data.error || 'Error';
+        el.className = 'ms-3 small text-danger';
+      }
+    });
+  });
+
 });
 </script>
 {% endblock %}

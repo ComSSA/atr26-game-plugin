@@ -1,0 +1,35 @@
+[
+  {
+    "name": "Iron Sword",
+    "rarity": "common",
+    "damage_type": "physical",
+    "min_damage": 10,
+    "max_damage": 20,
+    "description": "A basic iron sword."
+  },
+  {
+    "name": "Fire Blade",
+    "rarity": "uncommon",
+    "damage_type": "fire",
+    "min_damage": 20,
+    "max_damage": 30,
+    "description": "A blade wreathed in flame."
+  },
+  {
+    "name": "Frost Edge",
+    "rarity": "rare",
+    "damage_type": "frost",
+    "min_damage": 30,
+    "max_damage": 40,
+    "description": "Chills the blood of its target."
+  },
+  {
+    "name": "Void Reaper",
+    "rarity": "legendary",
+    "damage_type": "arcane",
+    "min_damage": 40,
+    "max_damage": 50,
+    "description": "A weapon of immeasurable power.",
+    "hint_text": ""
+  }
+]

@@ -7,81 +7,140 @@
   </div>
 </div>
 
-<div class="container" x-data="LoadoutSelector">
+<div class="container" style="margin-top:-5rem" x-data="LoadoutSelector">
   <div x-show="loading" class="text-center py-5">
     <div class="spinner-border text-light" role="status">
       <span class="visually-hidden">Loading...</span>
     </div>
   </div>
 
-  <div x-show="!loading" class="row">
+  <div x-show="!loading">
+
     <!-- Loadout Slots -->
-    <div class="col-lg-7 mb-4">
-      <h3>Your Loadout</h3>
-      <p class="text-muted" x-show="submitted">Loadout has been submitted and locked in.</p>
+    <div class="mb-3">
+      <h3 class="atr26-section-title">Your Loadout</h3>
+      <p class="atr26-section-sub" x-show="submitted">Loadout has been submitted and locked in.</p>
 
       <div class="atr26-loadout-grid">
         <template x-for="slot in 5" :key="slot">
           <div class="atr26-loadout-slot"
-               :class="{'atr26-loadout-slot-filled': slots[slot], 'atr26-loadout-slot-empty': !slots[slot]}"
+               :class="{'atr26-loadout-slot-filled': slots[slot]}"
                @click="!submitted && openSlotPicker(slot)">
             <div class="atr26-slot-number" x-text="'Slot ' + slot"></div>
             <template x-if="slots[slot]">
               <div class="atr26-slot-weapon">
+                <img :src="weaponSprite(slots[slot].inventory_item.weapon.damage_type, slots[slot].inventory_item.weapon.rarity)"
+                     :alt="slots[slot].inventory_item.weapon.name"
+                     class="atr26-slot-img"
+                     @error="$el.style.display='none'; $el.nextElementSibling.style.display='inline'">
+                <span style="display:none;font-size:1.6rem"
+                      x-text="typeEmoji(slots[slot].inventory_item.weapon.damage_type)"></span>
                 <div class="atr26-card-name" x-text="slots[slot].inventory_item.weapon.name"></div>
-                <span class="atr26-card-rarity"
-                      :class="'rarity-' + slots[slot].inventory_item.weapon.rarity"
-                      x-text="slots[slot].inventory_item.weapon.rarity"></span>
-                <span class="atr26-damage-type"
-                      :class="'dmgtype-' + slots[slot].inventory_item.weapon.damage_type"
-                      x-text="slots[slot].inventory_item.weapon.damage_type"></span>
+                <div class="atr26-card-rarity"
+                     :class="'rarity-' + slots[slot].inventory_item.weapon.rarity"
+                     x-text="slots[slot].inventory_item.weapon.rarity"></div>
                 <div class="atr26-rolled-damage"
                      x-text="'DMG: ' + (slots[slot].inventory_item.rolled_damage ?? '?')"></div>
               </div>
             </template>
             <template x-if="!slots[slot]">
-              <div class="atr26-slot-empty-label text-muted">Click to assign</div>
+              <div class="atr26-slot-empty-label">Click to assign</div>
             </template>
           </div>
         </template>
       </div>
 
-      <div class="mt-4" x-show="!submitted">
-        <button class="btn btn-primary" @click="saveLoadout()">Save Draft</button>
-        <button class="btn btn-success ms-2" @click="submitLoadout()">Submit Loadout</button>
+      <div class="mt-3" x-show="!submitted">
+        <button class="atr26-claim-btn" @click="saveLoadout()">Save Draft</button>
+        <button class="atr26-claim-btn atr26-claim-btn--success ms-2" @click="submitLoadout()">Submit Loadout</button>
+        <button class="atr26-claim-btn atr26-claim-btn--clear ms-2" @click="clearLoadout()">Clear All</button>
       </div>
     </div>
 
-    <!-- Inventory Sidebar -->
-    <div class="col-lg-5">
-      <h3>Your Weapons</h3>
-      <div class="atr26-inventory-sidebar">
+    <hr class="atr26-divider">
+
+    <!-- Weapons Grid -->
+    <div class="mb-4">
+      <h3 class="atr26-section-title">Your Weapons
+        <span class="atr26-section-sub ms-2" x-show="selectedSlot !== null"
+              x-text="'— click a weapon to assign to Slot ' + selectedSlot"></span>
+      </h3>
+
+      <div class="atr26-loadout-weapons-grid">
         <template x-for="item in inventory" :key="item.id">
-          <div class="atr26-sidebar-weapon"
-               :style="'border-left: 3px solid ' + item.weapon.card_border_color"
-               @click="!submitted && assignSelected(item)">
-            <strong x-text="item.weapon.name"></strong>
-            <div class="d-flex align-items-center gap-2 mt-1">
-              <span class="atr26-card-rarity" :class="'rarity-' + item.weapon.rarity" x-text="item.weapon.rarity"></span>
-              <span class="atr26-damage-type" :class="'dmgtype-' + item.weapon.damage_type" x-text="item.weapon.damage_type"></span>
-              <span class="atr26-rolled-damage" x-text="'DMG: ' + (item.rolled_damage ?? '?')"></span>
+          <div class="atr26-card"
+               :class="{
+                 'atr26-card-selectable': selectedSlot !== null && !submitted && !isAssigned(item),
+                 'atr26-card-assigned':   isAssigned(item)
+               }"
+               :style="'border-color: ' + rarityColor(item.weapon.rarity)"
+               @click="!submitted && selectedSlot !== null && !isAssigned(item) && assignSelected(item)">
+
+            <div class="atr26-card-icon">
+              <img :src="weaponSprite(item.weapon.damage_type, item.weapon.rarity)"
+                   :alt="item.weapon.name"
+                   @error="$el.style.display='none'; $el.nextElementSibling.style.display='inline'">
+              <span style="display:none;font-size:2rem"
+                    x-text="typeEmoji(item.weapon.damage_type)"></span>
+            </div>
+
+            <div class="atr26-card-body">
+              <div class="atr26-card-name" x-text="item.weapon.name"></div>
+              <div class="atr26-card-rarity"
+                   :class="'rarity-' + item.weapon.rarity"
+                   x-text="item.weapon.rarity"></div>
+              <div class="atr26-card-damage"
+                   x-text="'DMG: ' + (item.rolled_damage ?? '?')"></div>
+            </div>
+
+            <div x-show="isAssigned(item)" class="atr26-assigned-badge"
+                 x-text="'In Slot ' + slotOfItem(item)"></div>
+
+            <!-- Hover detail overlay -->
+            <div class="atr26-card-detail">
+              <div class="atr26-detail-badges">
+                <span class="atr26-card-rarity"
+                      :class="'rarity-' + item.weapon.rarity"
+                      x-text="item.weapon.rarity"
+                      style="border:1px solid currentColor;padding:.1rem .5rem;border-radius:2px;
+                             font-size:.65rem;letter-spacing:1px;text-transform:uppercase"></span>
+                <span :style="'color:' + typeColor(item.weapon.damage_type)"
+                      style="border:1px solid currentColor;padding:.1rem .5rem;border-radius:2px;
+                             font-size:.65rem;text-transform:uppercase"
+                      x-text="typeEmoji(item.weapon.damage_type) + ' ' + item.weapon.damage_type"></span>
+              </div>
+              <div class="atr26-detail-stats">
+                <div class="atr26-detail-stat">
+                  <div class="atr26-detail-label">DMG Rolled</div>
+                  <div class="atr26-detail-value" x-text="item.rolled_damage ?? '?'"></div>
+                </div>
+                <div class="atr26-detail-divider"></div>
+                <div class="atr26-detail-stat">
+                  <div class="atr26-detail-label">DMG Range</div>
+                  <div class="atr26-detail-range" x-text="damageRange(item.weapon.rarity)"></div>
+                </div>
+              </div>
+              <p x-show="item.weapon.description" class="atr26-detail-desc" x-text="item.weapon.description"></p>
             </div>
           </div>
         </template>
-        <p x-show="inventory.length === 0" class="text-muted">No weapons in inventory.</p>
+        <p x-show="inventory.length === 0" class="atr26-section-sub">No weapons in inventory.</p>
       </div>
+    </div>
 
-      <!-- Hints -->
-      <h3 class="mt-4">Hints</h3>
+    <!-- Hints -->
+    <div x-show="hints.length > 0">
+      <hr class="atr26-divider">
+      <h3 class="atr26-section-title">Hints</h3>
       <div class="atr26-hints-list">
         <template x-for="hint in hints" :key="hint.id">
           <div class="atr26-hint-card">
             <p x-text="hint.hint_content"></p>
           </div>
         </template>
-        <p x-show="hints.length === 0" class="text-muted">No hints collected yet.</p>
       </div>
     </div>
+
   </div>
 </div>
 {% endblock %}

@@ -1,3 +1,6 @@
+import json
+import os
+
 from flask import Blueprint, jsonify, render_template, request
 
 from CTFd.models import db
@@ -17,12 +20,7 @@ def weapons_page():
     from ..models import LootTable, Weapon
 
     weapons = Weapon.query.all()
-    loot_entries = LootTable.query.all()
-    return render_template(
-        "admin_weapons.html",
-        weapons=weapons,
-        loot_entries=loot_entries,
-    )
+    return render_template("admin_weapons.html", weapons=weapons)
 
 
 @admin_bp.route("/weapons", methods=["POST"])
@@ -138,3 +136,82 @@ def battle_page():
 def run_battle():
     # TODO: Implement auto-battler logic
     return jsonify({"success": True, "data": {"message": "Battle simulation (stub)"}})
+
+
+@admin_bp.route("/catalog/seed-weapons", methods=["POST"])
+@admins_only
+def seed_weapons():
+    seed_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "weapons_seed.json")
+    if not os.path.exists(seed_file):
+        return jsonify({"success": False, "error": "weapons_seed.json not found in plugin root"}), 404
+
+    with open(seed_file, encoding="utf-8") as f:
+        data = json.load(f)
+
+    from ..models import Weapon
+
+    created = updated = 0
+    for entry in data:
+        name = (entry.get("name") or "").strip()
+        if not name:
+            continue
+        existing = Weapon.query.filter_by(name=name).first()
+        if existing:
+            for field in ("description", "rarity", "damage_type", "icon_path",
+                          "card_border_color", "min_damage", "max_damage", "hint_text"):
+                if field in entry:
+                    setattr(existing, field, entry[field])
+            updated += 1
+        else:
+            db.session.add(Weapon(
+                name=name,
+                description=entry.get("description", ""),
+                rarity=entry.get("rarity", "common"),
+                damage_type=entry.get("damage_type", "fire"),
+                icon_path=entry.get("icon_path", ""),
+                card_border_color=entry.get("card_border_color", "#808080"),
+                min_damage=int(entry.get("min_damage", 0)),
+                max_damage=int(entry.get("max_damage", 0)),
+                hint_text=entry.get("hint_text", ""),
+            ))
+            created += 1
+
+    db.session.commit()
+    return jsonify({"success": True, "data": {"created": created, "updated": updated}})
+
+
+_SEED_CHALLENGES = [
+    {"name": "ATR26 — Warmup I",    "description": "Get started.\n\nFlag: `ATR26{warm_up_one}`",   "value": 50,  "tier": "easy"},
+    {"name": "ATR26 — Warmup II",   "description": "Keep going.\n\nFlag: `ATR26{warm_up_two}`",    "value": 75,  "tier": "easy"},
+    {"name": "ATR26 — Challenge I", "description": "Think harder.\n\nFlag: `ATR26{mid_tier_one}`", "value": 150, "tier": "medium"},
+    {"name": "ATR26 — Challenge II","description": "Almost there.\n\nFlag: `ATR26{mid_tier_two}`", "value": 200, "tier": "medium"},
+    {"name": "ATR26 — Endgame I",   "description": "Prove yourself.\n\nFlag: `ATR26{end_one}`",    "value": 400, "tier": "hard"},
+    {"name": "ATR26 — Endgame II",  "description": "True challenge.\n\nFlag: `ATR26{end_two}`",    "value": 500, "tier": "hard"},
+]
+
+
+@admin_bp.route("/catalog/seed-challenges", methods=["POST"])
+@admins_only
+def seed_challenges():
+    from CTFd.models import Challenges as CTFdChallenges, Tags
+
+    created = skipped = 0
+    for entry in _SEED_CHALLENGES:
+        if CTFdChallenges.query.filter_by(name=entry["name"]).first():
+            skipped += 1
+            continue
+        c = CTFdChallenges(
+            name=entry["name"],
+            description=entry["description"],
+            value=entry["value"],
+            category="ATR26",
+            type="standard",
+            state="visible",
+        )
+        db.session.add(c)
+        db.session.flush()
+        db.session.add(Tags(challenge_id=c.id, value=f"loot:{entry['tier']}"))
+        created += 1
+
+    db.session.commit()
+    return jsonify({"success": True, "data": {"created": created, "skipped": skipped}})

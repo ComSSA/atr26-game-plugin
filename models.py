@@ -91,6 +91,8 @@ class PendingCardOffer(db.Model):
             "id": self.id,
             "team_id": self.team_id,
             "challenge_id": self.challenge_id,
+            "weapon_id_a": self.weapon_id_a,
+            "weapon_id_b": self.weapon_id_b,
             "weapon_a": self.weapon_a.serialize() if self.weapon_a else None,
             "weapon_b": self.weapon_b.serialize() if self.weapon_b else None,
             "selected": self.selected,
