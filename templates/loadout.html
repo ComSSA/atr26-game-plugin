@@ -3,7 +3,7 @@
 {% block content %}
 <div class="jumbotron">
   <div class="container">
-    <h1>Loadout Selector</h1>
+    <h1>Loadout</h1>
   </div>
 </div>
 
@@ -15,63 +15,42 @@
   </div>
 
   <div x-show="!loading" class="row">
-    <!-- Loadout Slots -->
-    <div class="col-lg-7 mb-4">
-      <h3>Your Loadout</h3>
-      <p class="text-muted" x-show="submitted">Loadout has been submitted and locked in.</p>
-
-      <div class="atr26-loadout-grid">
-        <template x-for="slot in 5" :key="slot">
-          <div class="atr26-loadout-slot"
-               :class="{'atr26-loadout-slot-filled': slots[slot], 'atr26-loadout-slot-empty': !slots[slot]}"
-               @click="!submitted && openSlotPicker(slot)">
-            <div class="atr26-slot-number" x-text="'Slot ' + slot"></div>
-            <template x-if="slots[slot]">
-              <div class="atr26-slot-weapon">
-                <div class="atr26-card-name" x-text="slots[slot].inventory_item.weapon.name"></div>
-                <span class="atr26-card-rarity"
-                      :class="'rarity-' + slots[slot].inventory_item.weapon.rarity"
-                      x-text="slots[slot].inventory_item.weapon.rarity"></span>
-                <span class="atr26-damage-type"
-                      :class="'dmgtype-' + slots[slot].inventory_item.weapon.damage_type"
-                      x-text="slots[slot].inventory_item.weapon.damage_type"></span>
-                <div class="atr26-rolled-damage"
-                     x-text="'DMG: ' + (slots[slot].inventory_item.rolled_damage ?? '?')"></div>
-              </div>
-            </template>
-            <template x-if="!slots[slot]">
-              <div class="atr26-slot-empty-label text-muted">Click to assign</div>
-            </template>
-          </div>
-        </template>
-      </div>
-
-      <div class="mt-4" x-show="!submitted">
-        <button class="btn btn-primary" @click="saveLoadout()">Save Draft</button>
-        <button class="btn btn-success ms-2" @click="submitLoadout()">Submit Loadout</button>
-      </div>
-    </div>
-
-    <!-- Inventory Sidebar -->
-    <div class="col-lg-5">
-      <h3>Your Weapons</h3>
+    <!-- Weapons first on mobile (natural read: pick weapon → place) -->
+    <div class="col-lg-5 mb-4 order-1 order-lg-2">
+      <h3>Your weapons</h3>
+      <p class="text-muted small mb-2">
+        <strong>Either:</strong> click a weapon, then click a slot — <strong>or</strong> click a slot, then click a weapon.
+        The same item cannot fill two slots.
+      </p>
       <div class="atr26-inventory-sidebar">
         <template x-for="item in inventory" :key="item.id">
-          <div class="atr26-sidebar-weapon"
-               :style="'border-left: 3px solid ' + item.weapon.card_border_color"
-               @click="!submitted && assignSelected(item)">
-            <strong x-text="item.weapon.name"></strong>
-            <div class="d-flex align-items-center gap-2 mt-1">
-              <span class="atr26-card-rarity" :class="'rarity-' + item.weapon.rarity" x-text="item.weapon.rarity"></span>
-              <span class="atr26-damage-type" :class="'dmgtype-' + item.weapon.damage_type" x-text="item.weapon.damage_type"></span>
-              <span class="atr26-rolled-damage" x-text="'DMG: ' + (item.rolled_damage ?? '?')"></span>
-            </div>
+          <div
+            class="atr26-sidebar-weapon"
+            x-show="item.weapon"
+            :class="{
+              'atr26-sidebar-weapon-pending': pendingItem && pendingItem.id === item.id,
+              'atr26-sidebar-weapon-inloadout': isInventoryInAnySlot(item.id) !== null,
+            }"
+            :style="item.weapon ? ('border-left: 3px solid ' + item.weapon.card_border_color) : ''"
+            @click="onInventoryClick(item)"
+          >
+            <template x-if="item.weapon">
+              <div class="d-flex justify-content-between align-items-start gap-2">
+                <div>
+                  <strong x-text="item.weapon.name"></strong>
+                  <span class="atr26-card-rarity" :class="'rarity-' + item.weapon.rarity" x-text="item.weapon.rarity"></span>
+                  <span class="text-muted small ms-1" x-text="'DMG ' + item.rolled_damage"></span>
+                </div>
+                <span class="badge bg-secondary small" x-show="isInventoryInAnySlot(item.id) !== null">
+                  Slot <span x-text="isInventoryInAnySlot(item.id)"></span>
+                </span>
+              </div>
+            </template>
           </div>
         </template>
         <p x-show="inventory.length === 0" class="text-muted">No weapons in inventory.</p>
       </div>
 
-      <!-- Hints -->
       <h3 class="mt-4">Hints</h3>
       <div class="atr26-hints-list">
         <template x-for="hint in hints" :key="hint.id">
@@ -82,11 +61,79 @@
         <p x-show="hints.length === 0" class="text-muted">No hints collected yet.</p>
       </div>
     </div>
+
+    <div class="col-lg-7 mb-4 order-2 order-lg-1">
+      <h3>Your loadout</h3>
+      <template x-if="submitted">
+        <p class="text-muted">This loadout is <strong>locked</strong> after submit.</p>
+      </template>
+      <template x-if="!submitted">
+        <div class="alert alert-dark border-secondary py-2 small mb-3" role="note">
+          Choose up to five weapons for slots 1–5, then <strong>Save draft</strong>. When ready, <strong>Submit loadout</strong> locks it for the event.
+        </div>
+      </template>
+
+      <div x-show="saveMessage" class="alert alert-success py-2" x-text="saveMessage"></div>
+      <div x-show="saveError" class="alert alert-danger py-2" x-text="saveError"></div>
+
+      <div class="atr26-loadout-grid">
+        <template x-for="slot in [1, 2, 3, 4, 5]" :key="slot">
+          <div
+            class="atr26-loadout-slot"
+            :class="{
+              'atr26-loadout-slot-filled': slots[slot],
+              'atr26-loadout-slot-empty': !slots[slot],
+              'atr26-loadout-slot-selected': selectedSlot === slot,
+            }"
+            @click="onSlotClick(slot)"
+          >
+            <div class="atr26-slot-number" x-text="'Slot ' + slot"></div>
+            <template x-if="slots[slot] && slots[slot].inventory_item && slots[slot].inventory_item.weapon">
+              <div class="atr26-slot-weapon">
+                <div class="atr26-card-name" x-text="slots[slot].inventory_item.weapon.name"></div>
+                <span
+                  class="atr26-card-rarity"
+                  :class="'rarity-' + slots[slot].inventory_item.weapon.rarity"
+                  x-text="slots[slot].inventory_item.weapon.rarity"
+                ></span>
+                <span class="text-muted small" x-text="'DMG ' + (slots[slot].inventory_item.rolled_damage ?? '')"></span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger mt-2"
+                  x-show="!submitted"
+                  @click.stop="removeFromSlot(slot)"
+                >
+                  Remove
+                </button>
+              </div>
+            </template>
+            <template x-if="!slots[slot]">
+              <div class="atr26-slot-empty-label text-muted">
+                <span x-show="pendingItem">Drop here</span>
+                <span x-show="!pendingItem">Empty — click to select slot</span>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <div class="mt-3 d-flex flex-wrap gap-2" x-show="!submitted">
+        <button type="button" class="btn btn-outline-secondary btn-sm" @click="clearAllSlots()">Clear all</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" @click="pendingItem = null; selectedSlot = null">
+          Cancel selection
+        </button>
+      </div>
+
+      <div class="mt-4" x-show="!submitted">
+        <button type="button" class="btn btn-primary" @click="saveLoadout()">Save draft</button>
+        <button type="button" class="btn btn-success ms-2" @click="submitLoadout()">Submit loadout</button>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-{{ Assets.js("assets/js/page.js") }}
 <script src="/plugins/atr26_game/assets/js/loadout.js"></script>
+{{ Assets.js("assets/js/page.js") }}
 {% endblock %}

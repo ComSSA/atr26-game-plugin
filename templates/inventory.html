@@ -30,6 +30,7 @@
             <h5 class="atr26-card-name" x-text="item.weapon.name"></h5>
             <span class="atr26-card-rarity" :class="'rarity-' + item.weapon.rarity" x-text="item.weapon.rarity"></span>
             <span class="atr26-card-damage-type" x-text="item.weapon.damage_type"></span>
+            <p class="atr26-card-dmg mt-2"><strong>DMG:</strong> <span x-text="item.rolled_damage"></span></p>
             <p class="atr26-card-desc" x-text="item.weapon.description"></p>
           </div>
         </div>
@@ -40,6 +41,6 @@
 {% endblock %}
 
 {% block scripts %}
-{{ Assets.js("assets/js/page.js") }}
 <script src="/plugins/atr26_game/assets/js/inventory.js"></script>
+{{ Assets.js("assets/js/page.js") }}
 {% endblock %}

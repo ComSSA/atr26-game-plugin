@@ -1,0 +1,84 @@
+{
+  "weapons": [
+    {
+      "slug": "rusty_blade",
+      "name": "Rusty Blade",
+      "rarity": "common",
+      "damage_type": "physical",
+      "icon": "",
+      "enabled": true,
+      "description": "Better than nothing.",
+      "card_border_color": "#808080"
+    },
+    {
+      "slug": "oak_staff",
+      "name": "Oak Staff",
+      "rarity": "common",
+      "damage_type": "physical",
+      "icon": "",
+      "enabled": true,
+      "description": "Sturdy branch, enchanted not at all.",
+      "card_border_color": "#6d6d6d"
+    },
+    {
+      "slug": "ember_dagger",
+      "name": "Ember Dagger",
+      "rarity": "uncommon",
+      "damage_type": "fire",
+      "icon": "",
+      "enabled": true,
+      "description": "Warm to the touch.",
+      "card_border_color": "#2ecc71"
+    },
+    {
+      "slug": "frost_buckle",
+      "name": "Frost Buckle",
+      "rarity": "uncommon",
+      "damage_type": "ice",
+      "icon": "",
+      "enabled": true,
+      "description": "Chills the belt line.",
+      "card_border_color": "#5dade2"
+    },
+    {
+      "slug": "void_cannon",
+      "name": "Void Cannon",
+      "rarity": "rare",
+      "damage_type": "arcane",
+      "icon": "",
+      "enabled": true,
+      "description": "Barely contained.",
+      "card_border_color": "#3498db"
+    },
+    {
+      "slug": "storm_glaive",
+      "name": "Storm Glaive",
+      "rarity": "rare",
+      "damage_type": "lightning",
+      "icon": "",
+      "enabled": true,
+      "description": "Conducts more than electricity.",
+      "card_border_color": "#9b59b6"
+    },
+    {
+      "slug": "starfall_lance",
+      "name": "Starfall Lance",
+      "rarity": "legendary",
+      "damage_type": "radiant",
+      "icon": "",
+      "enabled": true,
+      "description": "A piece of the sky.",
+      "card_border_color": "#f1c40f"
+    },
+    {
+      "slug": "eclipse_blade",
+      "name": "Eclipse Blade",
+      "rarity": "legendary",
+      "damage_type": "shadow",
+      "icon": "",
+      "enabled": true,
+      "description": "Cuts light and shadow alike.",
+      "card_border_color": "#e67e22"
+    }
+  ]
+}

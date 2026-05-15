@@ -8,7 +8,6 @@
 </div>
 
 <div class="container">
-  <!-- Navigation -->
   <ul class="nav nav-tabs mb-4">
     <li class="nav-item">
       <a class="nav-link active" href="/atr26_game/admin/weapons">Weapons</a>
@@ -21,7 +20,17 @@
     </li>
   </ul>
 
-  <!-- Add Weapon Form -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h4 class="mb-0">Catalog tools</h4>
+    </div>
+    <div class="card-body">
+      {% include "_admin_seed_tools.html" %}
+      <p class="text-muted mb-0">Loot drops use all <strong>enabled</strong> weapons. Tag challenges with <code>loot:easy</code>, <code>loot:medium</code>, or <code>loot:hard</code> (and <code>loot:off</code> to disable). Each card rolls a <strong>rarity</strong> from the tier table, then a random weapon in that rarity. <strong>Easy</strong> never rolls legendary rarity; <strong>medium</strong> is stingy and cannot show two legendaries in the same pair; <strong>hard</strong> is the jackpot tier.</p>
+      <p class="text-muted small mb-0 mt-2"><strong>Seed weapons</strong> loads or updates rows from <code>weapons_seed.json</code> (safe to re-run). <strong>Seed test challenges</strong> adds standard challenges under <code>ATR26</code> (flags in descriptions); re-run skips existing names.</p>
+    </div>
+  </div>
+
   <div class="card mb-4">
     <div class="card-header">
       <h4>Add Weapon</h4>
@@ -29,58 +38,47 @@
     <div class="card-body">
       <form id="add-weapon-form">
         <div class="row">
-          <div class="col-md-4 mb-3">
+          <div class="col-md-3 mb-3">
+            <label class="form-label">Slug</label>
+            <input type="text" class="form-control" name="slug" required placeholder="unique_key">
+          </div>
+          <div class="col-md-3 mb-3">
             <label class="form-label">Name</label>
             <input type="text" class="form-control" name="name" required>
           </div>
-          <div class="col-md-4 mb-3">
+          <div class="col-md-2 mb-3">
             <label class="form-label">Rarity</label>
             <select class="form-select" name="rarity">
               <option value="common">Common</option>
+              <option value="uncommon">Uncommon</option>
               <option value="rare">Rare</option>
-              <option value="epic">Epic</option>
               <option value="legendary">Legendary</option>
             </select>
           </div>
-          <div class="col-md-4 mb-3">
+          <div class="col-md-2 mb-3">
             <label class="form-label">Damage Type</label>
-            <select class="form-select" name="damage_type">
-              <option value="fire">Fire</option>
-              <option value="frost">Frost</option>
-              <option value="lightning">Lightning</option>
-              <option value="poison">Poison</option>
-              <option value="arcane">Arcane</option>
+            <input type="text" class="form-control" name="damage_type" value="physical">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Enabled</label>
+            <select class="form-select" name="enabled">
+              <option value="1" selected>Yes</option>
+              <option value="0">No</option>
             </select>
           </div>
         </div>
         <div class="row">
-          <div class="col-md-4 mb-3">
+          <div class="col-md-6 mb-3">
             <label class="form-label">Description</label>
             <textarea class="form-control" name="description" rows="2"></textarea>
           </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label">Hint Text <small class="text-muted">(shown after selecting this weapon)</small></label>
-            <textarea class="form-control" name="hint_text" rows="2" placeholder="Leave blank for no hint"></textarea>
+          <div class="col-md-2 mb-3">
+            <label class="form-label">Border Color</label>
+            <input type="color" class="form-control form-control-color" name="card_border_color" value="#808080">
           </div>
-          <div class="col-md-4 mb-3 d-flex flex-column gap-2">
-            <div class="d-flex gap-2">
-              <div class="flex-fill">
-                <label class="form-label">Min Damage</label>
-                <input type="number" class="form-control" name="min_damage" value="0" min="0">
-              </div>
-              <div class="flex-fill">
-                <label class="form-label">Max Damage</label>
-                <input type="number" class="form-control" name="max_damage" value="0" min="0">
-              </div>
-            </div>
-            <div>
-              <label class="form-label">Border Color</label>
-              <input type="color" class="form-control form-control-color" name="card_border_color" value="#808080">
-            </div>
-            <div>
-              <label class="form-label">Icon Path</label>
-              <input type="text" class="form-control" name="icon_path" placeholder="/files/...">
-            </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Icon URL / path</label>
+            <input type="text" class="form-control" name="icon_path" placeholder="/files/...">
           </div>
         </div>
         <button type="submit" class="btn btn-success">Add Weapon</button>
@@ -88,7 +86,6 @@
     </div>
   </div>
 
-  <!-- Weapons Table -->
   <div class="card mb-4">
     <div class="card-header">
       <h4>All Weapons</h4>
@@ -98,10 +95,11 @@
         <thead>
           <tr>
             <th>ID</th>
+            <th>Slug</th>
             <th>Name</th>
             <th>Rarity</th>
             <th>Damage Type</th>
-            <th>Damage Range</th>
+            <th>Enabled</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -109,10 +107,11 @@
           {% for weapon in weapons %}
           <tr>
             <td>{{ weapon.id }}</td>
+            <td><code>{{ weapon.slug }}</code></td>
             <td>{{ weapon.name }}</td>
             <td>{{ weapon.rarity }}</td>
             <td>{{ weapon.damage_type }}</td>
-            <td>{{ weapon.min_damage }} – {{ weapon.max_damage }}</td>
+            <td>{{ weapon.enabled }}</td>
             <td>
               <button class="btn btn-sm btn-danger delete-weapon" data-weapon-id="{{ weapon.id }}">Delete</button>
             </td>
@@ -120,65 +119,7 @@
           {% endfor %}
           {% if not weapons %}
           <tr>
-            <td colspan="6" class="text-center text-muted">No weapons created yet.</td>
-          </tr>
-          {% endif %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Loot Table -->
-  <div class="card mb-4">
-    <div class="card-header">
-      <h4>Loot Table</h4>
-    </div>
-    <div class="card-body">
-      <form id="add-loot-form" class="row mb-3">
-        <div class="col-md-4">
-          <label class="form-label">Challenge ID</label>
-          <input type="number" class="form-control" name="challenge_id" required>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Weapon</label>
-          <select class="form-select" name="weapon_id">
-            {% for weapon in weapons %}
-            <option value="{{ weapon.id }}">{{ weapon.name }} ({{ weapon.rarity }})</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Weight</label>
-          <input type="number" class="form-control" name="weight" value="1" min="1">
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button type="submit" class="btn btn-success">Add Entry</button>
-        </div>
-      </form>
-
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th>Challenge ID</th>
-            <th>Weapon</th>
-            <th>Weight</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for entry in loot_entries %}
-          <tr>
-            <td>{{ entry.challenge_id }}</td>
-            <td>{{ entry.weapon.name if entry.weapon else 'Unknown' }}</td>
-            <td>{{ entry.weight }}</td>
-            <td>
-              <button class="btn btn-sm btn-danger delete-loot" data-entry-id="{{ entry.id }}">Delete</button>
-            </td>
-          </tr>
-          {% endfor %}
-          {% if not loot_entries %}
-          <tr>
-            <td colspan="4" class="text-center text-muted">No loot table entries yet.</td>
+            <td colspan="7" class="text-center text-muted">No weapons yet. Use <strong>Seed weapons</strong> above or add manually.</td>
           </tr>
           {% endif %}
         </tbody>
@@ -191,35 +132,16 @@
 document.addEventListener('DOMContentLoaded', function() {
   const csrfNonce = init.csrfNonce;
 
-  function nonceForm() {
-    const fd = new FormData();
-    fd.append('nonce', csrfNonce);
-    return fd;
-  }
-
   document.getElementById('add-weapon-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
-    formData.append('nonce', csrfNonce);
     fetch('/atr26_game/admin/weapons', {
       method: 'POST',
       headers: { 'CSRF-Token': csrfNonce },
       body: formData,
     }).then(r => r.json()).then(data => {
       if (data.success) location.reload();
-    });
-  });
-
-  document.getElementById('add-loot-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    formData.append('nonce', csrfNonce);
-    fetch('/atr26_game/admin/loot-table', {
-      method: 'POST',
-      headers: { 'CSRF-Token': csrfNonce },
-      body: formData,
-    }).then(r => r.json()).then(data => {
-      if (data.success) location.reload();
+      else alert(data.error || 'Failed');
     });
   });
 
@@ -229,20 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
       fetch('/atr26_game/admin/weapons/' + id + '/delete', {
         method: 'POST',
         headers: { 'CSRF-Token': csrfNonce },
-        body: nonceForm(),
-      }).then(r => r.json()).then(data => {
-        if (data.success) location.reload();
-      });
-    });
-  });
-
-  document.querySelectorAll('.delete-loot').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      const id = this.dataset.entryId;
-      fetch('/atr26_game/admin/loot-table/' + id + '/delete', {
-        method: 'POST',
-        headers: { 'CSRF-Token': csrfNonce },
-        body: nonceForm(),
       }).then(r => r.json()).then(data => {
         if (data.success) location.reload();
       });
