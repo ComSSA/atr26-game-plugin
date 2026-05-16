@@ -22,6 +22,22 @@
 
   <div class="card mb-4">
     <div class="card-header">
+      <h4 class="mb-0">Damage Ranges</h4>
+    </div>
+    <div class="card-body">
+      <p class="text-muted small mb-3">Inclusive damage rolled per card at drop time, by weapon rarity.</p>
+      <form id="damage-ranges-form">
+        <div class="row row-cols-2 row-cols-md-4 g-3 mb-3" id="damage-ranges-fields">
+          <!-- populated by JS -->
+        </div>
+        <button type="submit" class="btn btn-primary">Save Damage Ranges</button>
+        <span id="damage-ranges-status" class="ms-3 text-muted small"></span>
+      </form>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header">
       <h4 class="mb-0">Catalog tools</h4>
     </div>
     <div class="card-body">
@@ -131,6 +147,63 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   const csrfNonce = init.csrfNonce;
+
+  // Damage ranges
+  const RARITIES = ['common', 'uncommon', 'rare', 'legendary'];
+  const fieldsContainer = document.getElementById('damage-ranges-fields');
+  const damageStatus = document.getElementById('damage-ranges-status');
+
+  function buildDamageFields(data) {
+    fieldsContainer.innerHTML = '';
+    RARITIES.forEach(function(rarity) {
+      const range = (data && data[rarity]) || {};
+      const col = document.createElement('div');
+      col.className = 'col';
+      col.innerHTML = `
+        <div class="card h-100">
+          <div class="card-body p-2">
+            <h6 class="card-title text-capitalize mb-2">${rarity}</h6>
+            <div class="d-flex gap-2">
+              <div class="flex-fill">
+                <label class="form-label form-label-sm mb-1">Min</label>
+                <input type="number" class="form-control form-control-sm" name="${rarity}_min" value="${range.min ?? ''}" min="0">
+              </div>
+              <div class="flex-fill">
+                <label class="form-label form-label-sm mb-1">Max</label>
+                <input type="number" class="form-control form-control-sm" name="${rarity}_max" value="${range.max ?? ''}" min="0">
+              </div>
+            </div>
+          </div>
+        </div>`;
+      fieldsContainer.appendChild(col);
+    });
+  }
+
+  fetch('/atr26_game/admin/settings/damage-ranges')
+    .then(r => r.json())
+    .then(data => buildDamageFields(data.data || {}))
+    .catch(() => buildDamageFields({}));
+
+  document.getElementById('damage-ranges-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const body = {};
+    RARITIES.forEach(function(rarity) {
+      body[rarity] = {
+        min: parseInt(this.elements[rarity + '_min'].value, 10),
+        max: parseInt(this.elements[rarity + '_max'].value, 10),
+      };
+    }, this);
+    fetch('/atr26_game/admin/settings/damage-ranges', {
+      method: 'POST',
+      headers: { 'CSRF-Token': csrfNonce, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }).then(r => r.json()).then(data => {
+      damageStatus.textContent = data.success ? 'Saved.' : (data.error || 'Failed.');
+      damageStatus.className = 'ms-3 small ' + (data.success ? 'text-success' : 'text-danger');
+      setTimeout(() => { damageStatus.textContent = ''; }, 3000);
+    });
+  });
+
 
   document.getElementById('add-weapon-form').addEventListener('submit', function(e) {
     e.preventDefault();

@@ -12,13 +12,26 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from CTFd.models import Solves
 
-# Inclusive damage ranges by catalog rarity (rolled per card at drop time).
-DAMAGE_RANGE = {
+# Inclusive damage range defaults by rarity — overridden by CTFd config keys
+# atr26_damage_<rarity>_min / atr26_damage_<rarity>_max.
+DAMAGE_RANGE_DEFAULTS = {
     "common": (25, 30),
     "uncommon": (30, 35),
     "rare": (35, 40),
     "legendary": (40, 50),
 }
+
+
+def get_damage_range(rarity: str) -> tuple[int, int]:
+    from CTFd.utils import get_config
+
+    lo_default, hi_default = DAMAGE_RANGE_DEFAULTS.get(rarity, (25, 30))
+    try:
+        lo = int(get_config(f"atr26_damage_{rarity}_min") or lo_default)
+        hi = int(get_config(f"atr26_damage_{rarity}_max") or hi_default)
+    except (TypeError, ValueError):
+        lo, hi = lo_default, hi_default
+    return lo, hi
 
 # Per-card rarity roll weights by challenge loot tier (must sum > 0).
 # Easy: no legendary on the rarity roll (still get rares). Medium: low legendary; hard: real jackpot.
@@ -35,7 +48,7 @@ def normalize_rarity_for_damage(rarity: str) -> str:
     r = (rarity or "common").strip().lower()
     if r == "epic":
         return "rare"
-    if r in DAMAGE_RANGE:
+    if r in DAMAGE_RANGE_DEFAULTS:
         return r
     return "common"
 
@@ -51,7 +64,7 @@ def normalize_rarity_for_weight(rarity: str) -> str:
 
 def roll_damage_for_rarity(rarity: str) -> int:
     key = normalize_rarity_for_damage(rarity)
-    lo, hi = DAMAGE_RANGE[key]
+    lo, hi = get_damage_range(key)
     return random.randint(lo, hi)
 
 

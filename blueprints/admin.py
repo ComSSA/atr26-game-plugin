@@ -4,6 +4,7 @@ import os
 from flask import Blueprint, jsonify, render_template, request
 
 from CTFd.models import db
+from CTFd.utils import get_config, set_config
 from CTFd.utils.decorators import admins_only
 
 admin_bp = Blueprint(
@@ -121,6 +122,43 @@ def seed_weapons():
 
     created, updated = upsert_weapons_from_records(records)
     return jsonify({"success": True, "data": {"created": created, "updated": updated}})
+
+
+@admin_bp.route("/settings/damage-ranges", methods=["GET"])
+@admins_only
+def get_damage_ranges():
+    from ..loot import DAMAGE_RANGE_DEFAULTS, get_damage_range
+
+    data = {}
+    for rarity in DAMAGE_RANGE_DEFAULTS:
+        lo, hi = get_damage_range(rarity)
+        data[rarity] = {"min": lo, "max": hi}
+    return jsonify({"success": True, "data": data})
+
+
+@admin_bp.route("/settings/damage-ranges", methods=["POST"])
+@admins_only
+def set_damage_ranges():
+    from ..loot import DAMAGE_RANGE_DEFAULTS
+
+    body = request.get_json(silent=True) or {}
+    for rarity in DAMAGE_RANGE_DEFAULTS:
+        rarity_data = body.get(rarity)
+        if not isinstance(rarity_data, dict):
+            continue
+        lo = rarity_data.get("min")
+        hi = rarity_data.get("max")
+        if lo is not None:
+            try:
+                set_config(f"atr26_damage_{rarity}_min", int(lo))
+            except (TypeError, ValueError):
+                return jsonify({"success": False, "error": f"invalid min for {rarity}"}), 400
+        if hi is not None:
+            try:
+                set_config(f"atr26_damage_{rarity}_max", int(hi))
+            except (TypeError, ValueError):
+                return jsonify({"success": False, "error": f"invalid max for {rarity}"}), 400
+    return jsonify({"success": True})
 
 
 @admin_bp.route("/test-challenges/seed", methods=["POST"])
